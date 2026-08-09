@@ -37,7 +37,7 @@ test("opens PlayStudy directly at the site root", async () => {
 
   const html = await response.text();
   assert.match(html, /id="app"/);
-  assert.match(html, /href="\/playstudy\/styles\.css\?v=13"/);
+  assert.match(html, /href="\/playstudy\/styles\.css\?v=14"/);
   assert.match(html, /href="\/manifest\.webmanifest"/);
   assert.doesNotMatch(html, /\/playstudy\/index\.html[^"']*redirect/i);
 });
@@ -76,7 +76,7 @@ test("ships an early root-scoped landscape PWA bootstrap", async () => {
   assert.match(appScript, /\$\('#install-guide'\)\?\.showModal\(\)/);
   assert.doesNotMatch(appScript, /\(state\.canInstall\|\|iosInstallCandidate\(\)\)\?[^:]+:''/);
   assert.match(rootWorker, /playstudy-shell-/);
-  assert.match(rootWorker, /v13/);
+  assert.match(rootWorker, /v14/);
   assert.match(rootWorker, /const SCOPE_URL = new URL\(self\.registration\.scope\)/);
   assert.match(rootWorker, /cache\.addAll\(APP_SHELL/);
   assert.match(rootWorker, /navigationPreload\.enable/);
@@ -87,15 +87,15 @@ test("ships an early root-scoped landscape PWA bootstrap", async () => {
   assert.match(legacyWorker, /client\.navigate\('\/'\)/);
   assert.match(pageSource, /useEffect\(\(\) =>/);
   assert.match(pageSource, /document\.createElement\("script"\)/);
-  assert.match(pageSource, /loadScript\("\/pwa\.js\?v=13", "pwa"\)/);
-  assert.match(pageSource, /loadScript\("\/playstudy\/app\.js\?v=13", "app"\)/);
-  assert.match(pageSource, /href="\/playstudy\/styles\.css\?v=13"/);
+  assert.match(pageSource, /loadScript\("\/pwa\.js\?v=14", "pwa"\)/);
+  assert.match(pageSource, /loadScript\("\/playstudy\/app\.js\?v=14", "app"\)/);
+  assert.match(pageSource, /href="\/playstudy\/styles\.css\?v=14"/);
   assert.match(appScript, /id='video-import-progress'/);
   assert.match(appScript, /端末に動画を保存しています/);
   assert.match(appScript, /最初の場面からサムネイルを作っています/);
   assert.match(styles, /\.video-import-progress/);
   assert.doesNotMatch(appScript, /navigator\.share/);
-  assert.match(appScript, /標準ブラウザで追加する/);
+  assert.match(appScript, /ホーム画面に追加/);
   assert.match(appScript, /requestVideoFrameCallback/);
   assert.match(appScript, /document\.body\.classList\.toggle\('player-active'/);
   assert.match(styles, /html\.player-active,body\.player-active/);
@@ -126,8 +126,40 @@ test("builds a complete root GitHub Pages PWA", async () => {
   assert.equal(manifest.start_url, "/");
   assert.equal(manifest.scope, "/");
   assert.match(html, /name="playstudy-root" content="\/"/);
-  assert.match(html, /src="\/pwa\.js\?v=13"/);
-  assert.match(html, /src="\/playstudy\/app\.js\?v=13"/);
+  assert.match(html, /src="\/pwa\.js\?v=14"/);
+  assert.match(html, /src="\/playstudy\/app\.js\?v=14"/);
   assert.match(pwaBootstrap, /serviceWorker\.register/);
   assert.match(worker, /playstudy-shell-/);
+});
+
+test("ships one unified player-first workflow", async () => {
+  const [appScript, styles] = await Promise.all([
+    readFile(new URL("public/playstudy/app.js", root), "utf8"),
+    readFile(new URL("public/playstudy/styles.css", root), "utf8"),
+  ]);
+  const unified = appScript.slice(appScript.indexOf("/* ===== unified watch + memo experience ===== */"));
+
+  assert.match(unified, /state\.settings\.doubleTapSkip/);
+  assert.match(unified, /now-lastTap<320/);
+  assert.match(unified, /id="corner-frame-back"/);
+  assert.match(unified, /id="corner-speed-down"/);
+  assert.match(unified, /id="corner-speed-value"/);
+  assert.match(unified, /changeSpeed\(-1\)/);
+  assert.match(unified, /setSpeed\(1\)/);
+  assert.match(unified, /id="quick-note-title"/);
+  assert.match(unified, /id="quick-note-body"/);
+  assert.match(unified, /id="quick-tag-add"/);
+  assert.match(unified, /screenName==='record'/);
+  assert.match(unified, /nav=function\(\)\{return ''\}/);
+  assert.match(unified, /setTimeout\(hideChrome,1000\)/);
+  assert.match(unified, /toggleChrome\(\);tapTimer=setTimeout/);
+  assert.doesNotMatch(unified, /詳しくメモ/);
+  assert.doesNotMatch(unified, /simple-advanced|simple-mode-toggle/);
+  assert.doesNotMatch(unified, /id="note-kind"|id="note-range"|<label>種別<\/label>/);
+  assert.match(styles, /\.unified-player>\.topbar/);
+  assert.match(styles, /\.unified-player \.timeline-card/);
+  assert.match(styles, /\.unified-player \.controls/);
+  assert.match(styles, /\.unified-player \.tools/);
+  assert.match(styles, /\.corner-player-controls/);
+  assert.match(styles, /\.player-floating-chrome\.is-visible/);
 });

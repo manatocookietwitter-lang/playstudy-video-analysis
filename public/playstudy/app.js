@@ -511,44 +511,98 @@ handleVideoFiles=async function(event){
  if(state.simpleMode&&added.length===1&&files.length===1){state.activeVideo=added[0];route('player',added[0]);toast('動画を開きました')}else{render();if(added.length)toast(`${added.length}本追加しました`);if(failed)toast(`${failed}本は読み込めませんでした`)}
 };
 clearLegacyPosters();
-function setSimpleMode(enabled){state.simpleMode=!!enabled;localStorage.setItem('ps2_simple_mode',enabled?'1':'0');state.activeTab='memo';state.panelCollapsed=false;if(enabled&&!['library','player'].includes(state.screen))state.screen='library';render();saveSession()}
-nav=function(){return state.simpleMode?'':advancedNav()};
-topbar=function(title,back=false,extra=''){
- if(state.simpleMode)return `<header class="topbar simple-topbar">${back?`<button class="icon-btn" data-back aria-label="戻る">${ICONS.back}</button>`:'<span class="simple-logo">P</span>'}<h${back?'2':'1'}>${esc(title)}</h${back?'2':'1'}><span class="grow"></span><button class="simple-switch" id="simple-advanced">詳細機能</button></header>`;
- return advancedTopbar(title,back,extra).replace('</header>','<button class="simple-switch" id="simple-mode-toggle">かんたん表示</button></header>')
+
+/* ===== unified watch + memo experience ===== */
+state.simpleMode=true;
+state.panelCollapsed=false;
+state.activeTab='memo';
+state.settings.doubleTapSkip=clamp(+state.settings.doubleTapSkip||5,1,30);
+state.settingsReturn='library';
+state.notes.forEach(note=>delete note.kind);
+delete state.settings.noteKinds;
+persistMany('notes','settings');
+localStorage.removeItem('ps2_simple_mode');
+const unifiedBaseRoute=route;
+route=function(screenName,id){
+ if(screenName==='record')screenName='library';
+ if(screenName==='player')preferLandscape();
+ return unifiedBaseRoute(screenName,id)
 };
+nav=function(){return ''};
+topbar=function(title,back=false){const showBack=back||state.screen!=='library';return `<header class="topbar unified-page-header">${showBack?`<button class="icon-btn" data-back aria-label="戻る">${ICONS.back}</button>`:'<span class="simple-logo">P</span>'}<h${showBack?'2':'1'}>${esc(title)}</h${showBack?'2':'1'}></header>`};
+function unifiedInstallGuide(){return `<dialog id="install-guide" aria-labelledby="install-guide-title"><div class="dialog-head"><h3 id="install-guide-title">ホーム画面に追加</h3><button class="icon-btn" id="install-close" aria-label="閉じる">×</button></div><div class="dialog-body install-guide-body"><p>Safari・Chrome・EdgeでこのURLを開き、ブラウザのメニューから「ホーム画面に追加」または「アプリをインストール」を選んでください。</p><p class="install-guide-hint">既にある開けないアイコンは、新しいアイコンの起動確認後に削除してください。サイトデータは消さないでください。</p></div><div class="dialog-actions"><button class="btn primary" id="install-copy">URLをコピー</button><button class="btn" id="install-done">閉じる</button></div></dialog>`}
 library=function(){
- if(!state.simpleMode)return advancedLibrary();
- const recent=[...state.videos].sort((a,b)=>(b.lastOpened||0)-(a.lastOpened||0)).slice(0,4);
- const installed=standaloneMode(),installLabel=installed?'アプリで使用中':state.canInstall?'アプリをインストール':'標準ブラウザで追加する';
- const installAction=`<button class="simple-install" id="install-app" ${installed?'disabled aria-disabled="true"':''}>${installLabel}</button><span class="simple-install-note">ホーム追加はSafari・Chrome・Edgeから行ってください</span>`;
- const installGuide=`<dialog id="install-guide" aria-labelledby="install-guide-title"><div class="dialog-head"><h3 id="install-guide-title">標準ブラウザで追加</h3><button class="icon-btn" id="install-close" aria-label="閉じる">×</button></div><div class="dialog-body install-guide-body"><p>この画面から直接ホームへ追加すると、起動できないショートカットになる場合があります。</p><ol><li>下のボタンでURLをコピー</li><li>Safari・Chrome・Edgeに貼り付けて開く</li><li>そのブラウザのメニューから「ホーム画面に追加」または「アプリをインストール」を選ぶ</li></ol><p class="install-guide-hint">既にある開けないアイコンは、新しいアイコンの起動確認後に削除してください。ブラウザのサイトデータは消さないでください。</p></div><div class="dialog-actions"><button class="btn primary" id="install-copy">URLをコピー</button><button class="btn" id="install-done">閉じる</button></div></dialog>`;
- const recents=recent.length?`<section class="simple-recents"><div class="section-head"><h3>最近の動画</h3><span class="subtle">タップして再開</span></div><div class="simple-video-list">${recent.map(videoCard).join('')}</div></section>`:'';
- return `<div class="app-shell simple-mode simple-library">${topbar('PlayStudy')}<main class="content simple-content"><section class="simple-start"><span class="simple-kicker">横画面でかんたん分析</span><h2>動画を開いて、<br>気づきを残す。</h2><p>動画を選ぶと、そのまま横画面の再生画面へ進みます。</p><button class="simple-open" id="add-video">動画を開く</button>${installAction}<small>動画とメモはこの端末内で扱われます</small></section>${recents}</main>${installGuide}<div id="toast" class="toast"></div></div>`
+ const videos=[...state.videos].sort((a,b)=>(b.lastOpened||0)-(a.lastOpened||0)),installed=standaloneMode(),installLabel=installed?'アプリで使用中':state.canInstall?'アプリをインストール':'ホーム画面に追加';
+ const list=videos.length?`<section class="unified-videos"><div class="section-head"><h2>動画</h2><span class="subtle">${videos.length}本</span></div><div class="simple-video-list">${videos.map(videoCard).join('')}</div></section>`:`<div class="unified-empty"><b>動画はまだありません</b><span>下のボタンから端末内の動画を選んでください</span></div>`;
+ return `<div class="app-shell unified-library"><main class="content unified-home"><div class="unified-homebar"><div class="unified-brand"><span class="simple-logo">P</span><div><b>PlayStudy</b><small>動画を見て、気づきを残す</small></div></div><div class="unified-home-actions"><button class="unified-settings-button" id="unified-research">研究</button><button class="unified-settings-button" id="unified-settings" aria-label="設定">設定</button></div></div><section class="unified-open-card"><h1>動画を開く</h1><p>選ぶとすぐ再生画面へ進みます。動画とメモはこの端末内に保存されます。</p><button class="simple-open" id="add-video">動画を選ぶ</button><button class="simple-install" id="install-app" ${installed?'disabled aria-disabled="true"':''}>${installLabel}</button></section>${list}</main>${unifiedInstallGuide()}<div id="toast" class="toast"></div></div>`
 };
-analysisPanel=function(notes){
- if(!state.simpleMode)return advancedAnalysisPanel(notes);
- return `<aside class="analysis-panel simple-notes"><div class="simple-note-title"><div><b>気づきをメモ</b><span>現在の時刻に保存します</span></div></div><div class="quick-note"><input id="quick-note-input" maxlength="120" placeholder="例：着地前に上体が開いている"><button id="quick-note-save">保存</button></div><div class="panel-content">${memoList(notes)}</div><button class="add-panel-btn" id="panel-add">＋ 詳しくメモを書く</button></aside>`
-};
-player=function(){let html=advancedPlayer();if(!state.simpleMode)return html;const current=activeV(),label=`<div class="video-source-label"><span>再生中の動画</span><b>${esc(current?.title||'')}</b></div><div class="video-tap-hint">画面をタップして再生・一時停止</div>`;return html.replace('app-shell player-page','app-shell player-page simple-mode').replace('<div class="video-overlay">',`<div class="video-overlay">${label}`)};
 bindLibrary=function(){
- if(!state.simpleMode)return advancedBindLibrary();
  const input=$('#video-file');if(input)input.onchange=handleVideoFiles;
- $('#add-video')?.addEventListener('click',()=>input?.click())
-};
-enhanceBoundUI=function(){
- advancedEnhanceBoundUI();
- $('#simple-advanced')?.addEventListener('click',()=>setSimpleMode(false));
- $('#simple-mode-toggle')?.addEventListener('click',()=>setSimpleMode(true));
+ $('#add-video')?.addEventListener('click',()=>input?.click());
+ $('#unified-research')?.addEventListener('click',()=>route('research'));
+ $('#unified-settings')?.addEventListener('click',()=>{state.settingsReturn='library';route('settings')});
  $('#install-app')?.addEventListener('click',requestPwaInstall);
  $('#install-close')?.addEventListener('click',()=>$('#install-guide')?.close());
  $('#install-done')?.addEventListener('click',()=>$('#install-guide')?.close());
- $('#install-copy')?.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(location.href);toast('URLをコピーしました')}catch{toast('URLをコピーできませんでした')}});
- const playerVideo=$('#main-video'),tapHint=$('.video-tap-hint');if(playerVideo&&tapHint){const syncHint=()=>tapHint.classList.toggle('is-hidden',!playerVideo.paused);playerVideo.addEventListener('play',syncHint);playerVideo.addEventListener('pause',syncHint);syncHint()}
- const saveQuickNote=()=>{const input=$('#quick-note-input'),text=input?.value.trim();if(!text)return toast('メモを入力してください');const vid=$('#main-video'),time=vid?.currentTime||activeV()?.last||0;state.notes.push({id:uid('n'),videoId:activeV().id,kind:'観察',title:text,body:'',type:'point',time,tagIds:[]});activeV().last=time;persistMany('notes','videos');render();toast('メモを保存しました')};
- $('#quick-note-save')?.addEventListener('click',saveQuickNote);
- $('#quick-note-input')?.addEventListener('keydown',e=>{if(e.key==='Enter'&&!e.isComposing){e.preventDefault();saveQuickNote()}})
+ $('#install-copy')?.addEventListener('click',async()=>{try{await navigator.clipboard.writeText(location.href);toast('URLをコピーしました')}catch{toast('URLをコピーできませんでした')}})
 };
+function unifiedTagChoices(selected=[]){return state.tagDefs.map(tag=>`<label class="unified-tag-choice" style="--tag-color:${tag.color}"><input type="checkbox" data-note-tag="${tag.id}" ${selected.includes(tag.id)?'checked':''}><span>${esc(tag.name)}</span></label>`).join('')||'<span class="subtle">タグはまだありません</span>'}
+memoList=function(notes){return notes.length?[...notes].sort((a,b)=>(a.time||0)-(b.time||0)).map(note=>`<article class="memo-card unified-memo-card" data-seek="${note.time||0}"><div class="memo-top"><time>${fmt(note.time||0,true)}</time><button class="icon-mini grow-right" data-edit-note="${note.id}" aria-label="メモを編集">編集</button></div><h4>${esc(note.title||'無題メモ')}</h4>${note.body?`<p>${esc(note.body)}</p>`:''}${(note.tagIds||[]).length?`<div class="unified-note-tags">${note.tagIds.map(id=>{const tag=state.tagDefs.find(item=>item.id===id);return tag?`<span style="--tag-color:${tag.color}">${esc(tag.name)}</span>`:''}).join('')}</div>`:''}</article>`).join(''):'<div class="empty">まだメモがありません</div>'};
+analysisPanel=function(notes){return `<aside class="analysis-panel unified-notes"><div class="unified-note-heading"><div><b>メモ</b><span>現在の再生位置に保存</span></div></div><div class="unified-note-form"><input id="quick-note-title" maxlength="120" placeholder="タイトル"><textarea id="quick-note-body" maxlength="600" placeholder="説明"></textarea><div class="unified-tag-choices" id="unified-tag-choices">${unifiedTagChoices()}</div><div class="unified-tag-add"><input id="quick-tag-name" maxlength="24" placeholder="新しいタグ"><input id="quick-tag-color" type="color" value="#2f6df6" aria-label="タグの色"><button id="quick-tag-add" type="button">追加</button></div><button class="unified-note-save" id="quick-note-save" type="button">この時刻に保存</button></div><div class="panel-content unified-note-list">${memoList(notes)}</div></aside>`};
+noteDialog=function(){const note=state.notes.find(item=>item.id===state.editNoteId);return `<dialog id="note-dialog"><div class="dialog-head"><h3>${note?'メモを編集':'メモを追加'}</h3><button class="icon-btn" data-close>×</button></div><div class="dialog-body"><div class="field"><label>タイトル</label><input id="note-title" value="${esc(note?.title||'')}" placeholder="短い見出し"></div><div class="field"><label>説明</label><textarea id="note-body" placeholder="気づいたこと">${esc(note?.body||'')}</textarea></div><div class="field"><label>タグ</label><div class="unified-tag-choices">${unifiedTagChoices(note?.tagIds||[])}</div></div>${note?'<button class="btn danger-lite full" id="note-delete">削除</button>':''}</div><div class="dialog-actions"><button class="btn" data-close>キャンセル</button><button class="btn primary" id="note-save">保存</button></div></dialog>`};
+bindNoteDialog=function(vid){
+ const dialog=$('#note-dialog');if(!dialog)return;const existing=state.notes.find(item=>item.id===state.editNoteId);
+ $('#note-save')?.addEventListener('click',()=>{const title=$('#note-title').value.trim(),body=$('#note-body').value.trim(),tagIds=$$('[data-note-tag]:checked',dialog).map(item=>item.dataset.noteTag);if(!title)return toast('タイトルを入力してください');const note=existing||{id:uid('n'),videoId:activeV().id,time:vid?.currentTime||activeV().last||0,type:'point'};note.title=title;note.body=body;note.tagIds=tagIds;note.type='point';delete note.kind;delete note.start;delete note.end;if(!existing)state.notes.push(note);persist('notes');clearNoteDraft();state.editNoteId=null;dialog.close();render();toast('メモを保存しました')});
+ $('#note-delete')?.addEventListener('click',()=>{if(!existing)return;state.notes=state.notes.filter(item=>item.id!==existing.id);persist('notes');clearNoteDraft();state.editNoteId=null;dialog.close();render()});
+ $$('[data-edit-note]').forEach(button=>button.onclick=event=>{event.stopPropagation();openNote(vid,button.dataset.editNote)})
+};
+function addUnifiedTag(name,color='#2f6df6'){
+ const clean=String(name||'').trim();if(!clean)return null;const existing=state.tagDefs.find(tag=>tag.name.toLowerCase()===clean.toLowerCase());if(existing)return existing;
+ const tag={id:uid('td'),name:clean,color,mode:'point',before:0,after:0,group:'メモ',order:state.tagDefs.length+1};state.tagDefs.push(tag);persist('tagDefs');return tag
+}
+function unifiedTagSettingsRows(){return state.tagDefs.map(tag=>`<div class="unified-tag-setting" data-tag-setting="${tag.id}"><input type="color" value="${tag.color}" data-tag-color="${tag.id}" aria-label="${esc(tag.name)}の色"><input value="${esc(tag.name)}" maxlength="24" data-tag-name="${tag.id}"><button class="danger-text" data-tag-delete="${tag.id}">削除</button></div>`).join('')||'<div class="empty">タグはまだありません</div>'}
+settings=function(){return `<div class="app-shell unified-settings"><header class="unified-settings-head"><button id="settings-back" aria-label="戻る">←</button><h1>設定</h1></header><main class="content settings-page"><section class="settings-group"><h2>再生操作</h2><div class="settings-list"><label class="setting-row"><span><b>ダブルタップ</b><small>左側で戻る・右側で進む</small></span><select id="set-double-tap">${[3,5,10,15,30].map(seconds=>`<option value="${seconds}" ${state.settings.doubleTapSkip===seconds?'selected':''}>${seconds}秒</option>`).join('')}</select></label><label class="setting-row"><span><b>動画表示</b></span><select id="set-fit"><option value="fit" ${state.settings.fitMode==='fit'?'selected':''}>全体を表示</option><option value="fill" ${state.settings.fitMode==='fill'?'selected':''}>画面いっぱい</option></select></label></div></section><section class="settings-group"><h2>タグ</h2><p class="subtle">メモにつけるタグを自由に追加・編集できます。</p><div class="unified-settings-tag-add"><input id="settings-tag-name" maxlength="24" placeholder="タグ名"><input id="settings-tag-color" type="color" value="#2f6df6" aria-label="タグの色"><button class="btn primary" id="settings-tag-add">追加</button></div><div class="unified-tag-settings-list">${unifiedTagSettingsRows()}</div></section><section class="settings-group"><h2>表示</h2><div class="settings-list"><label class="setting-row"><span><b>外観</b></span><select id="set-theme"><option value="light" ${state.settings.theme==='light'?'selected':''}>ライト</option><option value="dark" ${state.settings.theme==='dark'?'selected':''}>ダーク</option></select></label></div></section><section class="settings-group"><h2>データ</h2><div id="storage-estimate" class="storage-estimate"><b>保存容量</b><span>計算中…</span></div><div class="export-grid"><button class="btn" id="backup-export">メモをバックアップ</button><button class="btn" id="backup-export-videos">動画込みバックアップ</button><button class="btn" id="backup-import">バックアップを復元</button></div><input id="restore-file" type="file" accept="application/json,.psbundle" hidden></section></main><div id="toast" class="toast"></div></div>`};
+bindSettings=function(){
+ const update=(key,value)=>{state.settings[key]=value;persist('settings')};
+ $('#settings-back')?.addEventListener('click',()=>route(state.settingsReturn==='player'&&activeV()?'player':'library',activeV()?.id));
+ $('#set-double-tap')?.addEventListener('change',event=>update('doubleTapSkip',+event.target.value));
+ $('#set-fit')?.addEventListener('change',event=>{update('fitMode',event.target.value);state.videos.forEach(item=>item.fitMode=event.target.value);persist('videos')});
+ $('#set-theme')?.addEventListener('change',event=>{update('theme',event.target.value);applyTheme()});
+ $('#settings-tag-add')?.addEventListener('click',()=>{const tag=addUnifiedTag($('#settings-tag-name').value,$('#settings-tag-color').value);if(tag)render();else toast('タグ名を入力してください')});
+ $$('[data-tag-name]').forEach(input=>input.addEventListener('change',event=>{const tag=state.tagDefs.find(item=>item.id===input.dataset.tagName);if(tag){tag.name=event.target.value.trim()||tag.name;persist('tagDefs')}}));
+ $$('[data-tag-color]').forEach(input=>input.addEventListener('change',event=>{const tag=state.tagDefs.find(item=>item.id===input.dataset.tagColor);if(tag){tag.color=event.target.value;persist('tagDefs')}}));
+ $$('[data-tag-delete]').forEach(button=>button.addEventListener('click',()=>{const id=button.dataset.tagDelete;state.tagDefs=state.tagDefs.filter(tag=>tag.id!==id);state.notes.forEach(note=>note.tagIds=(note.tagIds||[]).filter(tagId=>tagId!==id));state.scenes.forEach(item=>item.tagIds=(item.tagIds||[]).filter(tagId=>tagId!==id));state.tagEvents=state.tagEvents.filter(event=>event.tagId!==id);persistMany('tagDefs','notes','scenes','tagEvents');render()}));
+ $('#backup-export')?.addEventListener('click',()=>exportBackup(false));$('#backup-export-videos')?.addEventListener('click',()=>exportBackup(true));$('#backup-import')?.addEventListener('click',()=>$('#restore-file')?.click());$('#restore-file')?.addEventListener('change',importBackup);refreshStorageEstimate()
+};
+function bindUnifiedMemoCards(vid,root=document){
+ $$('[data-seek]',root).forEach(card=>card.onclick=event=>{if(event.target.closest('button'))return;seek(vid,+card.dataset.seek)});
+ $$('[data-edit-note]',root).forEach(button=>button.onclick=event=>{event.stopPropagation();openNote(vid,button.dataset.editNote)})
+}
+function bindUnifiedPlayer(){
+ const vid=$('#main-video'),stage=$('.video-stage'),chrome=$('#player-chrome'),center=$('#center-play'),feedback=$('#double-tap-feedback');if(!vid||!stage)return;const current=activeV(),fps=current.fps||state.settings.frameRate||30,speeds=[.1,.25,.5,.75,1,1.25,1.5,2];let chromeTimer,tapTimer,lastTap=0,lastX=0;
+ const hideChrome=()=>{clearTimeout(chromeTimer);chrome?.classList.remove('is-visible');center?.classList.remove('is-visible')};
+ const showChrome=()=>{chrome?.classList.add('is-visible');center?.classList.add('is-visible');clearTimeout(chromeTimer);chromeTimer=setTimeout(hideChrome,1000)};
+ const toggleChrome=()=>chrome?.classList.contains('is-visible')?hideChrome():showChrome();
+ const showSkip=(seconds,side)=>{if(!feedback)return;feedback.textContent=`${seconds>0?'+':'−'}${Math.abs(seconds)}秒`;feedback.className=`double-tap-feedback ${side} is-visible`;setTimeout(()=>feedback.classList.remove('is-visible'),650)};
+ stage.addEventListener('click',event=>{if(event.target.closest('button,input,textarea,label'))return;event.preventDefault();event.stopImmediatePropagation();const now=Date.now(),rect=stage.getBoundingClientRect(),x=event.clientX-rect.left;if(now-lastTap<320&&Math.abs(x-lastX)<Math.max(90,rect.width*.24)){clearTimeout(tapTimer);lastTap=0;const amount=(x<rect.width/2?-1:1)*(state.settings.doubleTapSkip||5);seek(vid,vid.currentTime+amount);showSkip(amount,x<rect.width/2?'left':'right');return}lastTap=now;lastX=x;toggleChrome();tapTimer=setTimeout(()=>{lastTap=0;vid.paused?vid.play().catch(()=>{}):vid.pause()},280)},true);
+ center?.addEventListener('click',showChrome);
+ $('#player-settings')?.addEventListener('click',()=>{state.settingsReturn='player';route('settings')});
+ const bindFrame=(button,delta)=>{if(!button)return;let hold;const stop=()=>clearInterval(hold);button.onpointerdown=()=>{stepFrames(vid,delta,fps);hold=setInterval(()=>stepFrames(vid,delta,fps),state.settings.frameHoldMs||160)};button.onpointerup=button.onpointercancel=button.onpointerleave=stop;button.onclick=event=>event.preventDefault()};
+ bindFrame($('#corner-frame-back'),-1);bindFrame($('#corner-frame-forward'),1);
+ const setSpeed=value=>{vid.playbackRate=value;current.lastSpeed=value;setPlaybackAudioPolicy(vid);persist('videos');const label=$('#corner-speed-value');if(label)label.textContent=`${value}×`};
+ const changeSpeed=direction=>{const now=vid.playbackRate||1;let index=speeds.findIndex(value=>Math.abs(value-now)<.001);if(index<0)index=speeds.reduce((best,value,i)=>Math.abs(value-now)<Math.abs(speeds[best]-now)?i:best,0);setSpeed(speeds[clamp(index+direction,0,speeds.length-1)])};
+ $('#corner-speed-down')?.addEventListener('click',()=>changeSpeed(-1));$('#corner-speed-up')?.addEventListener('click',()=>changeSpeed(1));$('#corner-speed-value')?.addEventListener('click',()=>setSpeed(1));
+ const saveQuickNote=()=>{const title=$('#quick-note-title')?.value.trim(),body=$('#quick-note-body')?.value.trim(),tagIds=$$('[data-note-tag]:checked',$('#unified-tag-choices')).map(item=>item.dataset.noteTag);if(!title)return toast('タイトルを入力してください');state.notes.push({id:uid('n'),videoId:current.id,title,body,type:'point',time:vid.currentTime,tagIds});current.last=vid.currentTime;persistMany('notes','videos');$('#quick-note-title').value='';$('#quick-note-body').value='';$$('[data-note-tag]:checked',$('#unified-tag-choices')).forEach(item=>item.checked=false);const list=$('.unified-note-list');list.innerHTML=memoList(state.notes.filter(note=>note.videoId===current.id));bindUnifiedMemoCards(vid,list);toast('メモを保存しました')};
+ $('#quick-note-save')?.addEventListener('click',saveQuickNote);
+ $('#quick-note-title')?.addEventListener('keydown',event=>{if(event.key==='Enter'&&!event.isComposing){event.preventDefault();saveQuickNote()}});
+ $('#quick-tag-add')?.addEventListener('click',()=>{const tag=addUnifiedTag($('#quick-tag-name').value,$('#quick-tag-color').value);if(!tag)return toast('タグ名を入力してください');const choices=$('#unified-tag-choices');choices.innerHTML=unifiedTagChoices([tag.id]);$('#quick-tag-name').value='';toast(`「${tag.name}」を追加しました`)});
+ bindUnifiedMemoCards(vid,$('.unified-note-list'))
+}
+player=function(){
+ const current=activeV();let html=advancedPlayer();const chrome=`<div class="player-floating-chrome" id="player-chrome"><button data-back aria-label="動画一覧へ戻る">←</button><div><span>再生中</span><b>${esc(current?.title||'')}</b></div><button id="player-settings" aria-label="設定">設定</button></div>`,corner=`<div class="corner-player-controls" aria-label="コマ送りと速度"><button id="corner-frame-back" aria-label="1コマ戻る">|◀</button><button id="corner-frame-forward" aria-label="1コマ進む">▶|</button><span class="corner-speed"><button id="corner-speed-down" aria-label="速度を下げる">−</button><button id="corner-speed-value" aria-label="速度を1倍に戻す">${current?.lastSpeed||1}×</button><button id="corner-speed-up" aria-label="速度を上げる">＋</button></span></div><div class="double-tap-feedback" id="double-tap-feedback"></div>`;
+ return html.replace('app-shell player-page','app-shell player-page unified-player').replace('<main class="player-wrap">',`${chrome}<main class="player-wrap">`).replace('<div class="video-overlay">',`<div class="video-overlay">${corner}`)
+};
+enhanceBoundUI=function(){applyUiPrefs();$$('button').forEach(button=>{if(!button.dataset.hapticBound){button.dataset.hapticBound='1';button.addEventListener('pointerdown',haptic,{passive:true})}});if(state.screen==='player')bindUnifiedPlayer()};
 
 window.addEventListener('resize',()=>{document.documentElement.style.setProperty('--panel-pct',(state.settings.panelWidth||27)+'%')});
 document.documentElement.style.setProperty('--panel-pct',(state.settings.panelWidth||27)+'%');
