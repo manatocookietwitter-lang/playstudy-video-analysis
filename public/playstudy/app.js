@@ -579,7 +579,7 @@ function bindUnifiedMemoCards(vid,root=document){
  $$('[data-edit-note]',root).forEach(button=>button.onclick=event=>{event.stopPropagation();openNote(vid,button.dataset.editNote)})
 }
 function bindUnifiedPlayer(){
- const vid=$('#main-video'),stage=$('.video-stage'),chrome=$('#player-chrome'),center=$('#center-play'),feedback=$('#double-tap-feedback');if(!vid||!stage)return;const current=activeV(),fps=current.fps||state.settings.frameRate||30,speeds=[.1,.25,.5,.75,1,1.25,1.5,2];let chromeTimer,tapTimer,lastTap=0,lastX=0;
+ const vid=$('#main-video'),stage=$('.video-stage'),chrome=$('#player-chrome'),center=$('#center-play'),feedback=$('#double-tap-feedback');if(!stage)return;if(!vid){chrome?.classList.add('is-visible');$('#player-settings')?.addEventListener('click',()=>{state.settingsReturn='player';route('settings')});return}const current=activeV(),fps=current.fps||state.settings.frameRate||30,speeds=[.1,.25,.5,.75,1,1.25,1.5,2];let chromeTimer,tapTimer,lastTap=0,lastX=0;
  const hideChrome=()=>{clearTimeout(chromeTimer);chrome?.classList.remove('is-visible');center?.classList.remove('is-visible')};
  const showChrome=()=>{chrome?.classList.add('is-visible');center?.classList.add('is-visible');clearTimeout(chromeTimer);chromeTimer=setTimeout(hideChrome,1000)};
  const toggleChrome=()=>chrome?.classList.contains('is-visible')?hideChrome():showChrome();

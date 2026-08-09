@@ -153,6 +153,7 @@ test("ships one unified player-first workflow", async () => {
   assert.match(unified, /nav=function\(\)\{return ''\}/);
   assert.match(unified, /setTimeout\(hideChrome,1000\)/);
   assert.match(unified, /toggleChrome\(\);tapTimer=setTimeout/);
+  assert.match(unified, /if\(!vid\)\{chrome\?\.classList\.add\('is-visible'\)/);
   assert.doesNotMatch(unified, /詳しくメモ/);
   assert.doesNotMatch(unified, /simple-advanced|simple-mode-toggle/);
   assert.doesNotMatch(unified, /id="note-kind"|id="note-range"|<label>種別<\/label>/);
