@@ -1,11 +1,29 @@
 document.documentElement.setAttribute("data-pwa-boot", "started");
 (() => {
+  const INSTALLED_KEY = "playstudy_pwa_installed";
   const rootMeta = document.querySelector('meta[name="playstudy-root"]')?.content || "/";
   const rootUrl = new URL(rootMeta, location.href);
   const standalone = () =>
     matchMedia("(display-mode: standalone)").matches ||
     matchMedia("(display-mode: fullscreen)").matches ||
     window.navigator.standalone === true;
+  const rememberInstalled = () => {
+    try {
+      localStorage.setItem(INSTALLED_KEY, "1");
+    } catch {
+      // Storage can be unavailable in private or restricted browser modes.
+    }
+  };
+  const installedKnown = () => {
+    if (standalone()) return true;
+    try {
+      return localStorage.getItem(INSTALLED_KEY) === "1";
+    } catch {
+      return false;
+    }
+  };
+
+  if (standalone()) rememberInstalled();
 
   let installPrompt = null;
   let registration = null;
@@ -27,6 +45,7 @@ document.documentElement.setAttribute("data-pwa-boot", "started");
 
   window.addEventListener("appinstalled", () => {
     installPrompt = null;
+    rememberInstalled();
     notify();
   });
 
@@ -34,6 +53,7 @@ document.documentElement.setAttribute("data-pwa-boot", "started");
     status() {
       return {
         standalone: standalone(),
+        installed: installedKnown(),
         canPrompt: Boolean(installPrompt),
         serviceWorker: registration?.active?.state || registration?.installing?.state || null,
         serviceWorkerScope: registration?.scope || null,
@@ -43,7 +63,7 @@ document.documentElement.setAttribute("data-pwa-boot", "started");
       };
     },
     async install() {
-      if (standalone()) return { outcome: "installed" };
+      if (installedKnown()) return { outcome: "installed" };
       if (!installPrompt) return { outcome: "manual" };
       const prompt = installPrompt;
       installPrompt = null;

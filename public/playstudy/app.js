@@ -411,9 +411,10 @@ function bindNoteDialog(vid){
 
 /* ===== simple mode: open -> inspect -> memo ===== */
 state.simpleMode=localStorage.getItem('ps2_simple_mode')!=='0';
-const pwaStatus=()=>window.playStudyPWA?.status?.()||{standalone:matchMedia('(display-mode: standalone)').matches||navigator.standalone===true,canPrompt:false,isIOS:/iphone|ipad|ipod/i.test(navigator.userAgent),isSafari:false};
+const pwaStatus=()=>window.playStudyPWA?.status?.()||{standalone:matchMedia('(display-mode: standalone)').matches||navigator.standalone===true,installed:matchMedia('(display-mode: standalone)').matches||navigator.standalone===true,canPrompt:false,isIOS:/iphone|ipad|ipod/i.test(navigator.userAgent),isSafari:false};
 state.canInstall=!!pwaStatus().canPrompt;
 const standaloneMode=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
+const installedMode=()=>!!(pwaStatus().installed||standaloneMode());
 function preferLandscape(){if(!standaloneMode()||!screen.orientation?.lock)return;try{const result=screen.orientation.lock('landscape');result?.catch?.(()=>{})}catch{}}
 function captureFirstFrame(url){
  return new Promise(resolve=>{
@@ -459,14 +460,14 @@ async function backfillFirstFramePosters(items=state.videos){
  if(changed){persist('videos');if(state.screen==='library')render()}
 }
 async function requestPwaInstall(){
- if(standaloneMode())return toast('PlayStudyはインストール済みです');
+ if(installedMode())return toast('PlayStudyはインストール済みです');
  const result=await window.playStudyPWA?.install?.();
  if(result?.outcome==='accepted')return toast('PlayStudyをインストールしています');
  if(result?.outcome==='installed')return toast('PlayStudyはインストール済みです');
  $('#install-guide')?.showModal();
 }
 window.addEventListener('playstudy-pwa-change',()=>{state.canInstall=!!pwaStatus().canPrompt;if(state.screen==='library')render()});
-window.addEventListener('appinstalled',()=>{state.canInstall=false;toast('PlayStudyをインストールしました')});
+window.addEventListener('appinstalled',()=>{state.canInstall=false;if(state.screen==='library')render();toast('PlayStudyをインストールしました')});
 const advancedRoute=route,advancedNav=nav,advancedTopbar=topbar,advancedLibrary=library,advancedPlayer=player,advancedAnalysisPanel=analysisPanel,advancedBindLibrary=bindLibrary,advancedEnhanceBoundUI=enhanceBoundUI,advancedTimelineHtml=timelineHtml,advancedAddReferenceVideos=addReferenceVideos,advancedConsumeSharedVideos=consumeSharedVideos,advancedSettings=settings;
 route=function(screenName,id){if(screenName==='player'&&!video(id||state.activeVideo))return advancedRoute('library');if(screenName==='player')preferLandscape();return advancedRoute(screenName,id)};
 timelineHtml=function(v){return advancedTimelineHtml(v).replaceAll("background-image:url('assets/demo_frame.jpg')",'')};
@@ -532,9 +533,9 @@ nav=function(){return ''};
 topbar=function(title,back=false){const showBack=back||state.screen!=='library';return `<header class="topbar unified-page-header">${showBack?`<button class="icon-btn" data-back aria-label="戻る">${ICONS.back}</button>`:'<span class="simple-logo">P</span>'}<h${showBack?'2':'1'}>${esc(title)}</h${showBack?'2':'1'}></header>`};
 function unifiedInstallGuide(){return `<dialog id="install-guide" aria-labelledby="install-guide-title"><div class="dialog-head"><h3 id="install-guide-title">ホーム画面に追加</h3><button class="icon-btn" id="install-close" aria-label="閉じる">×</button></div><div class="dialog-body install-guide-body"><p>Safari・Chrome・EdgeでこのURLを開き、ブラウザのメニューから「ホーム画面に追加」または「アプリをインストール」を選んでください。</p><p class="install-guide-hint">既にある開けないアイコンは、新しいアイコンの起動確認後に削除してください。サイトデータは消さないでください。</p></div><div class="dialog-actions"><button class="btn primary" id="install-copy">URLをコピー</button><button class="btn" id="install-done">閉じる</button></div></dialog>`}
 library=function(){
- const videos=[...state.videos].sort((a,b)=>(b.lastOpened||0)-(a.lastOpened||0)),installed=standaloneMode(),installLabel=installed?'アプリで使用中':state.canInstall?'アプリをインストール':'ホーム画面に追加';
+ const videos=[...state.videos].sort((a,b)=>(b.lastOpened||0)-(a.lastOpened||0)),installed=installedMode(),installLabel=state.canInstall?'アプリをインストール':'ホーム画面に追加',installAction=installed?'':`<button class="simple-install" id="install-app">${installLabel}</button>`;
  const list=videos.length?`<section class="unified-videos"><div class="section-head"><h2>動画</h2><span class="subtle">${videos.length}本</span></div><div class="simple-video-list">${videos.map(videoCard).join('')}</div></section>`:`<div class="unified-empty"><b>動画はまだありません</b><span>下のボタンから端末内の動画を選んでください</span></div>`;
- return `<div class="app-shell unified-library"><main class="content unified-home"><div class="unified-homebar"><div class="unified-brand"><span class="simple-logo">P</span><div><b>PlayStudy</b><small>動画を見て、気づきを残す</small></div></div><div class="unified-home-actions"><button class="unified-settings-button" id="unified-research">研究</button><button class="unified-settings-button" id="unified-settings" aria-label="設定">設定</button></div></div><section class="unified-open-card"><h1>動画を開く</h1><p>選ぶとすぐ再生画面へ進みます。動画とメモはこの端末内に保存されます。</p><button class="simple-open" id="add-video">動画を選ぶ</button><button class="simple-install" id="install-app" ${installed?'disabled aria-disabled="true"':''}>${installLabel}</button></section>${list}</main>${unifiedInstallGuide()}<div id="toast" class="toast"></div></div>`
+ return `<div class="app-shell unified-library"><main class="content unified-home"><div class="unified-homebar"><div class="unified-brand"><span class="simple-logo">P</span><div><b>PlayStudy</b><small>動画を見て、気づきを残す</small></div></div><div class="unified-home-actions"><button class="unified-settings-button" id="unified-research">研究</button><button class="unified-settings-button" id="unified-settings" aria-label="設定">設定</button></div></div><section class="unified-open-card"><h1>動画を開く</h1><p>選ぶとすぐ再生画面へ進みます。動画とメモはこの端末内に保存されます。</p><button class="simple-open" id="add-video">動画を選ぶ</button>${installAction}</section>${list}</main>${unifiedInstallGuide()}<div id="toast" class="toast"></div></div>`
 };
 bindLibrary=function(){
  const input=$('#video-file');if(input)input.onchange=handleVideoFiles;

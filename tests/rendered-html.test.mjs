@@ -37,7 +37,7 @@ test("opens PlayStudy directly at the site root", async () => {
 
   const html = await response.text();
   assert.match(html, /id="app"/);
-  assert.match(html, /href="\/playstudy\/styles\.css\?v=14"/);
+  assert.match(html, /href="\/playstudy\/styles\.css\?v=15"/);
   assert.match(html, /href="\/manifest\.webmanifest"/);
   assert.doesNotMatch(html, /\/playstudy\/index\.html[^"']*redirect/i);
 });
@@ -68,6 +68,9 @@ test("ships an early root-scoped landscape PWA bootstrap", async () => {
   assert.match(pwaBootstrap, /navigator\.serviceWorker\.register/);
   assert.match(pwaBootstrap, /updateViaCache: "none"/);
   assert.match(pwaBootstrap, /playstudy-pwa-change/);
+  assert.match(pwaBootstrap, /playstudy_pwa_installed/);
+  assert.match(pwaBootstrap, /installed: installedKnown\(\)/);
+  assert.match(pwaBootstrap, /rememberInstalled\(\)/);
   assert.match(pwaBootstrap, /window\.isSecureContext/);
   assert.doesNotMatch(appScript, /navigator\.serviceWorker\.register/);
   assert.match(appScript, /id="install-app"/);
@@ -76,7 +79,7 @@ test("ships an early root-scoped landscape PWA bootstrap", async () => {
   assert.match(appScript, /\$\('#install-guide'\)\?\.showModal\(\)/);
   assert.doesNotMatch(appScript, /\(state\.canInstall\|\|iosInstallCandidate\(\)\)\?[^:]+:''/);
   assert.match(rootWorker, /playstudy-shell-/);
-  assert.match(rootWorker, /v14/);
+  assert.match(rootWorker, /v15/);
   assert.match(rootWorker, /const SCOPE_URL = new URL\(self\.registration\.scope\)/);
   assert.match(rootWorker, /cache\.addAll\(APP_SHELL/);
   assert.match(rootWorker, /navigationPreload\.enable/);
@@ -87,9 +90,9 @@ test("ships an early root-scoped landscape PWA bootstrap", async () => {
   assert.match(legacyWorker, /client\.navigate\('\/'\)/);
   assert.match(pageSource, /useEffect\(\(\) =>/);
   assert.match(pageSource, /document\.createElement\("script"\)/);
-  assert.match(pageSource, /loadScript\("\/pwa\.js\?v=14", "pwa"\)/);
-  assert.match(pageSource, /loadScript\("\/playstudy\/app\.js\?v=14", "app"\)/);
-  assert.match(pageSource, /href="\/playstudy\/styles\.css\?v=14"/);
+  assert.match(pageSource, /loadScript\("\/pwa\.js\?v=15", "pwa"\)/);
+  assert.match(pageSource, /loadScript\("\/playstudy\/app\.js\?v=15", "app"\)/);
+  assert.match(pageSource, /href="\/playstudy\/styles\.css\?v=15"/);
   assert.match(appScript, /id='video-import-progress'/);
   assert.match(appScript, /端末に動画を保存しています/);
   assert.match(appScript, /最初の場面からサムネイルを作っています/);
@@ -126,8 +129,8 @@ test("builds a complete root GitHub Pages PWA", async () => {
   assert.equal(manifest.start_url, "/");
   assert.equal(manifest.scope, "/");
   assert.match(html, /name="playstudy-root" content="\/"/);
-  assert.match(html, /src="\/pwa\.js\?v=14"/);
-  assert.match(html, /src="\/playstudy\/app\.js\?v=14"/);
+  assert.match(html, /src="\/pwa\.js\?v=15"/);
+  assert.match(html, /src="\/playstudy\/app\.js\?v=15"/);
   assert.match(pwaBootstrap, /serviceWorker\.register/);
   assert.match(worker, /playstudy-shell-/);
 });
@@ -151,6 +154,10 @@ test("ships one unified player-first workflow", async () => {
   assert.match(unified, /id="quick-tag-add"/);
   assert.match(unified, /screenName==='record'/);
   assert.match(unified, /nav=function\(\)\{return ''\}/);
+  assert.match(unified, /installed=installedMode\(\)/);
+  assert.match(unified, /installAction=installed\?'':/);
+  assert.match(unified, /\$\{installAction\}<\/section>/);
+  assert.doesNotMatch(unified, /installed\?'アプリで使用中'/);
   assert.match(unified, /setTimeout\(hideChrome,1000\)/);
   assert.match(unified, /toggleChrome\(\);tapTimer=setTimeout/);
   assert.match(unified, /if\(!vid\)\{chrome\?\.classList\.add\('is-visible'\)/);
