@@ -71,7 +71,14 @@ document.documentElement.setAttribute("data-pwa-boot", "started");
         updateViaCache: "none"
       });
       await registration.update();
-      registration.addEventListener("updatefound", notify);
+      const trackWorker = (worker) => worker?.addEventListener("statechange", notify);
+      registration.addEventListener("updatefound", () => {
+        trackWorker(registration.installing);
+        notify();
+      });
+      trackWorker(registration.installing);
+      trackWorker(registration.waiting);
+      trackWorker(registration.active);
     } catch (error) {
       registrationError = error;
     }

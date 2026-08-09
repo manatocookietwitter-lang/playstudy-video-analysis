@@ -37,7 +37,7 @@ test("opens PlayStudy directly at the site root", async () => {
 
   const html = await response.text();
   assert.match(html, /id="app"/);
-  assert.match(html, /href="\/playstudy\/styles\.css\?v=11"/);
+  assert.match(html, /href="\/playstudy\/styles\.css\?v=12"/);
   assert.match(html, /href="\/manifest\.webmanifest"/);
   assert.doesNotMatch(html, /\/playstudy\/index\.html[^"']*redirect/i);
 });
@@ -76,7 +76,7 @@ test("ships an early root-scoped landscape PWA bootstrap", async () => {
   assert.match(appScript, /\$\('#install-guide'\)\?\.showModal\(\)/);
   assert.doesNotMatch(appScript, /\(state\.canInstall\|\|iosInstallCandidate\(\)\)\?[^:]+:''/);
   assert.match(rootWorker, /playstudy-shell-/);
-  assert.match(rootWorker, /v11/);
+  assert.match(rootWorker, /v12/);
   assert.match(rootWorker, /const SCOPE_URL = new URL\(self\.registration\.scope\)/);
   assert.match(rootWorker, /cache\.addAll\(APP_SHELL/);
   assert.match(rootWorker, /navigationPreload\.enable/);
@@ -87,9 +87,9 @@ test("ships an early root-scoped landscape PWA bootstrap", async () => {
   assert.match(legacyWorker, /client\.navigate\('\/'\)/);
   assert.match(pageSource, /useEffect\(\(\) =>/);
   assert.match(pageSource, /document\.createElement\("script"\)/);
-  assert.match(pageSource, /loadScript\("\/pwa\.js\?v=11", "pwa"\)/);
-  assert.match(pageSource, /loadScript\("\/playstudy\/app\.js\?v=11", "app"\)/);
-  assert.match(pageSource, /href="\/playstudy\/styles\.css\?v=11"/);
+  assert.match(pageSource, /loadScript\("\/pwa\.js\?v=12", "pwa"\)/);
+  assert.match(pageSource, /loadScript\("\/playstudy\/app\.js\?v=12", "app"\)/);
+  assert.match(pageSource, /href="\/playstudy\/styles\.css\?v=12"/);
   assert.doesNotMatch(appScript, /navigator\.share/);
   assert.match(appScript, /標準ブラウザで追加する/);
   assert.match(appScript, /requestVideoFrameCallback/);
@@ -122,8 +122,8 @@ test("builds a complete root GitHub Pages PWA", async () => {
   assert.equal(manifest.start_url, "/");
   assert.equal(manifest.scope, "/");
   assert.match(html, /name="playstudy-root" content="\/"/);
-  assert.match(html, /src="\/pwa\.js\?v=11"/);
-  assert.match(html, /src="\/playstudy\/app\.js\?v=11"/);
+  assert.match(html, /src="\/pwa\.js\?v=12"/);
+  assert.match(html, /src="\/playstudy\/app\.js\?v=12"/);
   assert.match(pwaBootstrap, /serviceWorker\.register/);
   assert.match(worker, /playstudy-shell-/);
 });

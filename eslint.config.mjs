@@ -15,6 +15,7 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "public/playstudy/app.js",
+    "work/**",
     "next-env.d.ts",
   ]),
   eslint.configs.recommended,
