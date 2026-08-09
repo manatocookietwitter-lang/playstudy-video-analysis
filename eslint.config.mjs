@@ -11,8 +11,10 @@ const eslintConfig = defineConfig([
   globalIgnores([
     ".next/**",
     "dist/**",
+    "github-pages-dist/**",
     "out/**",
     "build/**",
+    "public/playstudy/app.js",
     "next-env.d.ts",
   ]),
   eslint.configs.recommended,

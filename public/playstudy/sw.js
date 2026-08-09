@@ -1,4 +1,4 @@
-const LEGACY_CACHES = /^playstudy-v[1-6](?:-|$)/;
+const LEGACY_CACHES = /^playstudy-(?:v|shell-v)(?:[1-9]|10)(?:-|$)/;
 
 self.addEventListener('install', (event) => {
   event.waitUntil(self.skipWaiting());

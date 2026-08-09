@@ -17,25 +17,25 @@ await mkdir(join(outputRoot, "playstudy"), { recursive: true });
 
 let html = await readFile(join(publicRoot, "playstudy", "index.html"), "utf8");
 html = html
-  .replace('<meta name="playstudy-root" content="/" />', "")
+  .replace('<meta name="playstudy-root" content="/" />', `<meta name="playstudy-root" content="${basePath}" />`)
   .replaceAll('href="/manifest.webmanifest"', `href="${basePath}manifest.webmanifest"`)
   .replaceAll('href="/playstudy/', `href="${basePath}playstudy/`)
-  .replaceAll('src="/playstudy/', `src="${basePath}playstudy/`);
+  .replaceAll('src="/playstudy/', `src="${basePath}playstudy/`)
+  .replaceAll('src="/pwa.js', `src="${basePath}pwa.js`);
 await writeFile(join(outputRoot, "index.html"), html);
 
 const manifest = JSON.parse(await readFile(join(publicRoot, "manifest.webmanifest"), "utf8"));
-manifest.id = `${basePath}app`;
-manifest.start_url = `${basePath}?source=pwa-v10`;
+manifest.id = `${basePath}playstudy`;
+manifest.start_url = basePath;
 manifest.scope = basePath;
 manifest.icons = manifest.icons.map((icon) => ({
   ...icon,
   src: `${basePath}${icon.src.replace(/^\//, "")}`,
 }));
-delete manifest.share_target;
-delete manifest.launch_handler;
 await writeFile(join(outputRoot, "manifest.webmanifest"), `${JSON.stringify(manifest, null, 2)}\n`);
 
 await cp(join(publicRoot, "sw.js"), join(outputRoot, "sw.js"));
+await cp(join(publicRoot, "pwa.js"), join(outputRoot, "pwa.js"));
 await cp(join(publicRoot, "playstudy", "app.js"), join(outputRoot, "playstudy", "app.js"));
 await cp(join(publicRoot, "playstudy", "styles.css"), join(outputRoot, "playstudy", "styles.css"));
 await cp(join(publicRoot, "playstudy", "icons"), join(outputRoot, "playstudy", "icons"), { recursive: true });

@@ -411,10 +411,9 @@ function bindNoteDialog(vid){
 
 /* ===== simple mode: open -> inspect -> memo ===== */
 state.simpleMode=localStorage.getItem('ps2_simple_mode')!=='0';
-let deferredInstallPrompt=window.__playStudyInstallPrompt||null;
-state.canInstall=!!deferredInstallPrompt;
+const pwaStatus=()=>window.playStudyPWA?.status?.()||{standalone:matchMedia('(display-mode: standalone)').matches||navigator.standalone===true,canPrompt:false,isIOS:/iphone|ipad|ipod/i.test(navigator.userAgent),isSafari:false};
+state.canInstall=!!pwaStatus().canPrompt;
 const standaloneMode=()=>matchMedia('(display-mode: standalone)').matches||navigator.standalone===true;
-const iosInstallCandidate=()=>/iphone|ipad|ipod/i.test(navigator.userAgent)&&!standaloneMode();
 function preferLandscape(){if(!standaloneMode()||!screen.orientation?.lock)return;try{const result=screen.orientation.lock('landscape');result?.catch?.(()=>{})}catch{}}
 function captureFirstFrame(url){
  return new Promise(resolve=>{
@@ -437,16 +436,13 @@ async function backfillFirstFramePosters(items=state.videos){
 }
 async function requestPwaInstall(){
  if(standaloneMode())return toast('PlayStudyはインストール済みです');
- if(deferredInstallPrompt){
-  deferredInstallPrompt.prompt();
-  const choice=await deferredInstallPrompt.userChoice;
-  deferredInstallPrompt=null;window.__playStudyInstallPrompt=null;state.canInstall=false;
-  if(choice.outcome!=='accepted')render();
- }else $('#install-guide')?.showModal();
+ const result=await window.playStudyPWA?.install?.();
+ if(result?.outcome==='accepted')return toast('PlayStudyをインストールしています');
+ if(result?.outcome==='installed')return toast('PlayStudyはインストール済みです');
+ $('#install-guide')?.showModal();
 }
-window.addEventListener('playstudy-install-ready',()=>{deferredInstallPrompt=window.__playStudyInstallPrompt||deferredInstallPrompt;state.canInstall=!!deferredInstallPrompt;if(state.screen==='library')render()});
-window.addEventListener('beforeinstallprompt',event=>{event.preventDefault();window.__playStudyInstallPrompt=event;deferredInstallPrompt=event;state.canInstall=true;if(state.screen==='library')render()});
-window.addEventListener('appinstalled',()=>{deferredInstallPrompt=null;state.canInstall=false;toast('PlayStudyをインストールしました')});
+window.addEventListener('playstudy-pwa-change',()=>{state.canInstall=!!pwaStatus().canPrompt;if(state.screen==='library')render()});
+window.addEventListener('appinstalled',()=>{state.canInstall=false;toast('PlayStudyをインストールしました')});
 const advancedRoute=route,advancedNav=nav,advancedTopbar=topbar,advancedLibrary=library,advancedPlayer=player,advancedAnalysisPanel=analysisPanel,advancedBindLibrary=bindLibrary,advancedEnhanceBoundUI=enhanceBoundUI,advancedTimelineHtml=timelineHtml,advancedAddReferenceVideos=addReferenceVideos,advancedConsumeSharedVideos=consumeSharedVideos,advancedSettings=settings;
 route=function(screenName,id){if(screenName==='player'&&!video(id||state.activeVideo))return advancedRoute('library');if(screenName==='player')preferLandscape();return advancedRoute(screenName,id)};
 timelineHtml=function(v){return advancedTimelineHtml(v).replaceAll("background-image:url('assets/demo_frame.jpg')",'')};
@@ -520,7 +516,6 @@ enhanceBoundUI=function(){
 
 window.addEventListener('resize',()=>{document.documentElement.style.setProperty('--panel-pct',(state.settings.panelWidth||27)+'%')});
 document.documentElement.style.setProperty('--panel-pct',(state.settings.panelWidth||27)+'%');
-if('serviceWorker' in navigator){const root=new URL(document.querySelector('meta[name="playstudy-root"]')?.content||'.',location.href).pathname;navigator.serviceWorker.register(`${root.replace(/\/?$/,'/')}sw.js`,{scope:root}).catch(()=>{})}
 window.addEventListener('beforeunload',persistAll);
 restoreSession();
 if(!activeV())state.screen='library';

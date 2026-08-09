@@ -4,69 +4,48 @@ import { useEffect } from "react";
 
 type PlayStudyWindow = Window & {
   __playStudyLoaded?: boolean;
-  __playStudyInstallPrompt?: Event;
 };
 
-function recoverLegacyServiceWorker() {
-  if (!("serviceWorker" in navigator)) return;
+function loadScript(src: string, marker: string) {
+  return new Promise<void>((resolve, reject) => {
+    const existing = document.querySelector<HTMLScriptElement>(`script[data-playstudy="${marker}"]`);
+    if (existing) {
+      if (existing.dataset.loaded === "true") resolve();
+      else existing.addEventListener("load", () => resolve(), { once: true });
+      return;
+    }
 
-  navigator.serviceWorker
-    .getRegistrations()
-    .then((registrations) =>
-      Promise.all(
-        registrations
-          .filter(
-            (registration) =>
-              registration.scope === `${location.origin}/playstudy/`,
-          )
-          .map((registration) => registration.unregister()),
-      ),
-    )
-    .catch(() => {});
-
-  if ("caches" in window) {
-    caches
-      .keys()
-      .then((keys) =>
-        Promise.all(
-          keys
-            .filter((key) => /^(?:playstudy-v[1-9]|playstudy-shell-v[1-9])(?:-|$)/.test(key))
-            .map((key) => caches.delete(key)),
-        ),
-      )
-      .catch(() => {});
-  }
+    const script = document.createElement("script");
+    script.src = src;
+    script.dataset.playstudy = marker;
+    script.addEventListener("load", () => {
+      script.dataset.loaded = "true";
+      resolve();
+    }, { once: true });
+    script.addEventListener("error", () => reject(new Error(`Failed to load ${src}`)), { once: true });
+    document.head.appendChild(script);
+  });
 }
 
 export default function Home() {
   useEffect(() => {
-    recoverLegacyServiceWorker();
-
     const playStudyWindow = window as PlayStudyWindow;
-    const captureInstallPrompt = (event: Event) => {
-      event.preventDefault();
-      playStudyWindow.__playStudyInstallPrompt = event;
-      window.dispatchEvent(new Event("playstudy-install-ready"));
-    };
-    window.addEventListener("beforeinstallprompt", captureInstallPrompt);
-
     if (playStudyWindow.__playStudyLoaded) return;
     playStudyWindow.__playStudyLoaded = true;
 
-    const script = document.createElement("script");
-    script.src = "/playstudy/app.js?v=10";
-    script.dataset.playstudy = "app";
-    document.body.appendChild(script);
-    return () => {
-      window.removeEventListener("beforeinstallprompt", captureInstallPrompt);
-    };
+    loadScript("/pwa.js?v=11", "pwa")
+      .then(() => loadScript("/playstudy/app.js?v=11", "app"))
+      .catch(() => {
+        playStudyWindow.__playStudyLoaded = false;
+      });
   }, []);
 
   return (
     <>
+      {/* eslint-disable-next-line @next/next/no-css-tags */}
       <link
         rel="stylesheet"
-        href="/playstudy/styles.css?v=10"
+        href="/playstudy/styles.css?v=11"
         precedence="default"
       />
       <div id="app" />

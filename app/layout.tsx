@@ -13,8 +13,8 @@ export async function generateMetadata(): Promise<Metadata> {
     (host.startsWith("localhost") ? "http" : "https");
 
   return {
-    title: "PlayStudy — 動画を開く、見る、メモする",
-    description: "スポーツ動画をすぐに開き、コマ送りで確認し、気づきをその場で残せる動画学習ツール。",
+    title: "PlayStudy - 動画を開く、見る、メモする",
+    description: "スポーツ動画をすぐに開き、横画面で確認しながら気づきを残せる動画学習ツール。",
     metadataBase: new URL(`${protocol}://${host}`),
     manifest: "/manifest.webmanifest",
     applicationName: "PlayStudy",
@@ -22,6 +22,7 @@ export async function generateMetadata(): Promise<Metadata> {
       capable: true,
       statusBarStyle: "default",
       title: "PlayStudy",
+      startupImage: [],
     },
     icons: {
       icon: [{ url: "/playstudy/icons/icon-192.png", sizes: "192x192", type: "image/png" }],
@@ -29,11 +30,13 @@ export async function generateMetadata(): Promise<Metadata> {
     },
     other: {
       "mobile-web-app-capable": "yes",
+      "apple-mobile-web-app-capable": "yes",
+      "apple-mobile-web-app-status-bar-style": "default",
       "screen-orientation": "landscape",
     },
     openGraph: {
-      title: "PlayStudy — 動画を開く、見る、メモする",
-      description: "動画を開く・見る・メモする。迷わず使えるスポーツ動画学習ツール。",
+      title: "PlayStudy - 動画を開く、見る、メモする",
+      description: "スポーツ動画を開いて、見る・メモする。迷わず使える動画学習ツール。",
       images: [{ url: "/og.png", width: 1536, height: 1024 }],
     },
     twitter: { card: "summary_large_image", images: ["/og.png"] },

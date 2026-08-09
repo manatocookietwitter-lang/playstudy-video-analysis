@@ -1,19 +1,18 @@
 {
-  "id": "/",
+  "id": "/playstudy",
   "name": "PlayStudy - スポーツ動画研究",
   "short_name": "PlayStudy",
-  "description": "動画を開き、横画面で確認し、気づきをその場で残せるスポーツ動画学習ツール。",
+  "description": "動画を開き、横画面で確認しながら気づきを残せるスポーツ動画学習ツール。",
   "lang": "ja",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
-  "prefer_related_applications": false,
-  "launch_handler": {
-    "client_mode": "navigate-existing"
-  },
+  "display_override": ["standalone", "minimal-ui"],
   "orientation": "landscape",
   "background_color": "#f6f8fb",
   "theme_color": "#2f6df6",
+  "categories": ["sports", "education", "productivity"],
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "/playstudy/icons/icon-192.png",
@@ -33,21 +32,5 @@
       "type": "image/png",
       "purpose": "maskable"
     }
-  ],
-  "share_target": {
-    "action": "/share-target",
-    "method": "POST",
-    "enctype": "multipart/form-data",
-    "params": {
-      "title": "title",
-      "text": "text",
-      "url": "url",
-      "files": [
-        {
-          "name": "videos",
-          "accept": ["video/*"]
-        }
-      ]
-    }
-  }
+  ]
 }
