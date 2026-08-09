@@ -163,3 +163,22 @@ body.player-active .player-page .panel-content{flex:1;min-height:0;max-height:no
  .simple-start h2{font-size:28px}
  body.player-active .simple-mode .player-wrap{padding-bottom:6px}
 }
+
+/* Video import progress stays visible while large local files are prepared. */
+.video-import-progress{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;padding:20px;background:rgba(5,10,22,.72);backdrop-filter:blur(8px)}
+.video-import-card{width:min(92vw,420px);padding:28px 26px 24px;border:1px solid rgba(255,255,255,.18);border-radius:22px;background:var(--surface);color:var(--text);box-shadow:0 28px 80px rgba(0,0,0,.38);text-align:center}
+.video-import-spinner{position:relative;width:58px;height:58px;margin:0 auto 15px;border-radius:50%;background:var(--blue-soft)}
+.video-import-spinner span{position:absolute;inset:7px;border:4px solid rgba(47,109,246,.2);border-top-color:var(--blue);border-radius:50%;animation:video-import-spin .85s linear infinite}
+.video-import-spinner b{display:none;position:absolute;inset:0;place-items:center;color:#fff;font-size:25px}
+.video-import-count{margin:0 0 6px;color:var(--blue);font-size:10px;font-weight:800;letter-spacing:.06em}
+.video-import-card h2{margin:0;font-size:22px;letter-spacing:-.03em}
+.video-import-file{min-height:20px;margin:9px 0 18px;overflow:hidden;color:var(--muted);font-size:11px;text-overflow:ellipsis;white-space:nowrap}
+.video-import-track{height:9px;overflow:hidden;border-radius:999px;background:var(--blue-soft)}
+.video-import-track span{display:block;width:1%;height:100%;border-radius:inherit;background:linear-gradient(90deg,#2f6df6,#66a1ff);transition:width .28s ease}
+.video-import-phase{margin:12px 0 0;font-size:13px;font-weight:800}
+.video-import-hint{margin:7px auto 0;max-width:330px;color:var(--muted);font-size:10px;line-height:1.6}
+.video-import-progress.is-complete .video-import-spinner{background:#2dbd75}.video-import-progress.is-complete .video-import-spinner span,.video-import-progress.is-error .video-import-spinner span{display:none}.video-import-progress.is-complete .video-import-spinner b{display:grid}.video-import-progress.is-complete .video-import-track span{background:#2dbd75}
+.video-import-progress.is-error .video-import-spinner{background:#fee2e2}.video-import-progress.is-error .video-import-spinner::after{content:'!';position:absolute;inset:0;display:grid;place-items:center;color:#dc2626;font-size:25px;font-weight:900}
+@keyframes video-import-spin{to{transform:rotate(360deg)}}
+@media(max-width:480px){.video-import-card{padding:24px 18px 21px;border-radius:18px}.video-import-card h2{font-size:20px}.video-import-hint{font-size:9px}}
+@media(prefers-reduced-motion:reduce){.video-import-spinner span{animation-duration:1.8s}.video-import-track span{transition:none}}

@@ -33,8 +33,8 @@ export default function Home() {
     if (playStudyWindow.__playStudyLoaded) return;
     playStudyWindow.__playStudyLoaded = true;
 
-    loadScript("/pwa.js?v=12", "pwa")
-      .then(() => loadScript("/playstudy/app.js?v=12", "app"))
+    loadScript("/pwa.js?v=13", "pwa")
+      .then(() => loadScript("/playstudy/app.js?v=13", "app"))
       .catch(() => {
         playStudyWindow.__playStudyLoaded = false;
       });
@@ -45,7 +45,7 @@ export default function Home() {
       {/* eslint-disable-next-line @next/next/no-css-tags */}
       <link
         rel="stylesheet"
-        href="/playstudy/styles.css?v=12"
+        href="/playstudy/styles.css?v=13"
         precedence="default"
       />
       <div id="app" />

@@ -426,6 +426,30 @@ function captureFirstFrame(url){
   source.preload='auto';source.muted=true;source.playsInline=true;source.addEventListener('loadedmetadata',prepare,{once:true});source.addEventListener('loadeddata',prepare,{once:true});source.addEventListener('error',()=>finish(''),{once:true});source.src=url;source.load();
  });
 }
+const waitForPaint=()=>new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));
+function showVideoImportProgress(file,index,total,stage,phase){
+ let overlay=$('#video-import-progress');
+ if(!overlay){
+  overlay=document.createElement('div');overlay.id='video-import-progress';overlay.className='video-import-progress';overlay.setAttribute('role','dialog');overlay.setAttribute('aria-modal','true');overlay.setAttribute('aria-labelledby','video-import-title');
+  overlay.innerHTML=`<div class="video-import-card"><div class="video-import-spinner" aria-hidden="true"><span></span><b>✓</b></div><p class="video-import-count"></p><h2 id="video-import-title">動画を読み込み中</h2><p class="video-import-file"></p><div class="video-import-track" role="progressbar" aria-label="動画の読み込み状況" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0"><span></span></div><p class="video-import-phase" aria-live="polite"></p><p class="video-import-hint">動画が大きい場合は少し時間がかかります。この画面のままお待ちください。</p></div>`;
+  document.body.appendChild(overlay);
+ }
+ overlay.classList.remove('is-complete','is-error');
+ const percent=clamp(Math.round(((index+stage)/Math.max(1,total))*100),1,99),size=file?.size?` ・ ${formatBytes(file.size)}`:'';
+ $('.video-import-count',overlay).textContent=total>1?`${index+1} / ${total} 本目`:'選んだ動画を準備しています';
+ $('.video-import-file',overlay).textContent=`${file?.name||'動画'}${size}`;
+ $('.video-import-phase',overlay).textContent=phase;
+ const track=$('.video-import-track',overlay);track.setAttribute('aria-valuenow',String(percent));$('span',track).style.width=`${percent}%`;
+ return overlay;
+}
+async function finishVideoImportProgress(success=true,message='再生画面を開きます'){
+ const overlay=$('#video-import-progress');if(!overlay)return;
+ overlay.classList.add(success?'is-complete':'is-error');
+ $('#video-import-title',overlay).textContent=success?'準備できました':'読み込めませんでした';
+ $('.video-import-phase',overlay).textContent=message;
+ const track=$('.video-import-track',overlay);track.setAttribute('aria-valuenow',success?'100':'0');$('span',track).style.width=success?'100%':'0%';
+ await new Promise(resolve=>setTimeout(resolve,success?320:900));overlay.remove();
+}
 async function backfillFirstFramePosters(items=state.videos){
  let changed=false;
  for(const item of items){
@@ -465,14 +489,26 @@ generateThumbnails=async function(vid,force=false){
 };
 handleVideoFiles=async function(event){
  const files=[...event.target.files];if(!files.length)return;
- const added=[];
- for(const file of files){
-  const id=uid('v');added.push(id);await idbPut(id,file);
-  const url=URL.createObjectURL(file),[meta,poster]=await Promise.all([probeVideo(url),captureFirstFrame(url)]),folders=state.folders.filter(f=>f.projectId===state.activeProject),currentProject=project(state.activeProject);
-  state.videos.unshift({id,title:file.name.replace(/\.[^.]+$/,''),date:new Date(file.lastModified||Date.now()).toISOString().slice(0,10),durationLabel:fmt(meta.duration),durationSeconds:meta.duration,src:url,poster,projectId:state.activeProject,folderId:state.activeFolder!=='all'?state.activeFolder:(folders[0]?.id||''),favorite:false,last:0,lastSpeed:1,fps:Math.round(meta.fps||30),sportName:currentProject?.sportName||'',athlete:'',opponent:'',eventName:'',tagIds:[],freeMemo:'',storageMode:'indexeddb',missingSource:false});
+ const added=[];let failed=0;event.target.disabled=true;
+ for(let index=0;index<files.length;index++){
+  const file=files[index],id=uid('v');let stored=false;
+  try{
+   showVideoImportProgress(file,index,files.length,.04,'端末に動画を保存しています');await waitForPaint();
+   await idbPut(id,file);stored=true;showVideoImportProgress(file,index,files.length,.55,'動画情報を確認しています');
+   const url=URL.createObjectURL(file),posterPromise=captureFirstFrame(url),meta=await probeVideo(url);
+   showVideoImportProgress(file,index,files.length,.74,'最初の場面からサムネイルを作っています');
+   const poster=await posterPromise;showVideoImportProgress(file,index,files.length,.94,'再生画面を準備しています');
+   const folders=state.folders.filter(folder=>folder.projectId===state.activeProject),currentProject=project(state.activeProject);
+   state.videos.unshift({id,title:file.name.replace(/\.[^.]+$/,''),date:new Date(file.lastModified||Date.now()).toISOString().slice(0,10),durationLabel:fmt(meta.duration),durationSeconds:meta.duration,src:url,poster,projectId:state.activeProject,folderId:state.activeFolder!=='all'?state.activeFolder:(folders[0]?.id||''),favorite:false,last:0,lastSpeed:1,fps:Math.round(meta.fps||30),sportName:currentProject?.sportName||'',athlete:'',opponent:'',eventName:'',tagIds:[],freeMemo:'',storageMode:'indexeddb',missingSource:false});
+   added.push(id);showVideoImportProgress(file,index,files.length,.99,index===files.length-1?'保存が完了しました':'次の動画を準備しています');
+  }catch(error){
+   console.error('video import failed',error);failed++;if(stored)try{await idbDelete(id)}catch{}
+   await finishVideoImportProgress(false,`${file.name}を読み込めませんでした`);
+  }
  }
- persist('videos');event.target.value='';
- if(state.simpleMode&&added.length===1){state.activeVideo=added[0];route('player',added[0]);toast('動画を開きました')}else{render();toast(`${files.length}本追加しました`)}
+ persist('videos');event.target.value='';event.target.disabled=false;
+ if(added.length)await finishVideoImportProgress(true,added.length===1?'再生画面を開きます':`${added.length}本の動画を追加しました`);
+ if(state.simpleMode&&added.length===1&&files.length===1){state.activeVideo=added[0];route('player',added[0]);toast('動画を開きました')}else{render();if(added.length)toast(`${added.length}本追加しました`);if(failed)toast(`${failed}本は読み込めませんでした`)}
 };
 clearLegacyPosters();
 function setSimpleMode(enabled){state.simpleMode=!!enabled;localStorage.setItem('ps2_simple_mode',enabled?'1':'0');state.activeTab='memo';state.panelCollapsed=false;if(enabled&&!['library','player'].includes(state.screen))state.screen='library';render();saveSession()}
