@@ -23,6 +23,7 @@ html = html
   .replaceAll('src="/playstudy/', `src="${basePath}playstudy/`)
   .replaceAll('src="/pwa.js', `src="${basePath}pwa.js`);
 await writeFile(join(outputRoot, "index.html"), html);
+await writeFile(join(outputRoot, "playstudy", "index.html"), html);
 
 const manifest = JSON.parse(await readFile(join(publicRoot, "manifest.webmanifest"), "utf8"));
 manifest.id = `${basePath}playstudy`;
@@ -36,6 +37,8 @@ await writeFile(join(outputRoot, "manifest.webmanifest"), `${JSON.stringify(mani
 
 await cp(join(publicRoot, "sw.js"), join(outputRoot, "sw.js"));
 await cp(join(publicRoot, "pwa.js"), join(outputRoot, "pwa.js"));
+await cp(join(publicRoot, "playstudy", "sw.js"), join(outputRoot, "playstudy", "sw.js"));
+await cp(join(publicRoot, "playstudy", "player-gestures.js"), join(outputRoot, "playstudy", "player-gestures.js"));
 await cp(join(publicRoot, "playstudy", "app.js"), join(outputRoot, "playstudy", "app.js"));
 await cp(join(publicRoot, "playstudy", "styles.css"), join(outputRoot, "playstudy", "styles.css"));
 await cp(join(publicRoot, "playstudy", "icons"), join(outputRoot, "playstudy", "icons"), { recursive: true });

@@ -1,56 +1,27 @@
-"use client";
-
-import { useEffect } from "react";
-
-type PlayStudyWindow = Window & {
-  __playStudyLoaded?: boolean;
-};
-
-function loadScript(src: string, marker: string) {
-  return new Promise<void>((resolve, reject) => {
-    const existing = document.querySelector<HTMLScriptElement>(`script[data-playstudy="${marker}"]`);
-    if (existing) {
-      if (existing.dataset.loaded === "true") resolve();
-      else existing.addEventListener("load", () => resolve(), { once: true });
-      return;
-    }
-
-    const script = document.createElement("script");
-    script.src = src;
-    script.dataset.playstudy = marker;
-    script.addEventListener("load", () => {
-      script.dataset.loaded = "true";
-      resolve();
-    }, { once: true });
-    script.addEventListener("error", () => reject(new Error(`Failed to load ${src}`)), { once: true });
-    document.head.appendChild(script);
-  });
-}
+import Link from "next/link";
 
 export default function Home() {
-  useEffect(() => {
-    const playStudyWindow = window as PlayStudyWindow;
-    if (playStudyWindow.__playStudyLoaded) return;
-    playStudyWindow.__playStudyLoaded = true;
-
-    loadScript("/pwa.js?v=18", "pwa")
-      .then(() => loadScript("/playstudy/app.js?v=18", "app"))
-      .catch(() => {
-        playStudyWindow.__playStudyLoaded = false;
-      });
-  }, []);
-
   return (
     <>
       {/* eslint-disable-next-line @next/next/no-css-tags */}
       <link
         rel="stylesheet"
-        href="/playstudy/styles.css?v=18"
+        href="/playstudy/styles.css?v=19"
         precedence="default"
       />
-      <div id="app" />
+      <div id="app">
+        <main className="boot-screen" role="status" aria-live="polite">
+          <span className="boot-mark" aria-hidden="true">P</span>
+          <b>PlayStudy</b>
+          <span data-boot-message>起動中…</span>
+          <Link className="boot-retry" href="/">再読み込み</Link>
+        </main>
+      </div>
       <input id="video-file" type="file" accept="video/*" multiple hidden />
       <input id="relink-file-global" type="file" accept="video/*" hidden />
+      <script defer src="/pwa.js?v=19" data-playstudy="pwa" />
+      <script defer src="/playstudy/player-gestures.js?v=19" data-playstudy="gestures" />
+      <script defer src="/playstudy/app.js?v=19" data-playstudy="app" />
     </>
   );
 }
