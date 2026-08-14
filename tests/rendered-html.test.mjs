@@ -37,7 +37,7 @@ test("opens PlayStudy directly at the site root", async () => {
 
   const html = await response.text();
   assert.match(html, /id="app"/);
-  assert.match(html, /href="\/playstudy\/styles\.css\?v=16"/);
+  assert.match(html, /href="\/playstudy\/styles\.css\?v=17"/);
   assert.match(html, /href="\/manifest\.webmanifest"/);
   assert.doesNotMatch(html, /\/playstudy\/index\.html[^"']*redirect/i);
 });
@@ -79,7 +79,7 @@ test("ships an early root-scoped landscape PWA bootstrap", async () => {
   assert.match(appScript, /\$\('#install-guide'\)\?\.showModal\(\)/);
   assert.doesNotMatch(appScript, /\(state\.canInstall\|\|iosInstallCandidate\(\)\)\?[^:]+:''/);
   assert.match(rootWorker, /playstudy-shell-/);
-  assert.match(rootWorker, /v16/);
+  assert.match(rootWorker, /v17/);
   assert.match(rootWorker, /const SCOPE_URL = new URL\(self\.registration\.scope\)/);
   assert.match(rootWorker, /cache\.addAll\(APP_SHELL/);
   assert.match(rootWorker, /navigationPreload\.enable/);
@@ -90,9 +90,9 @@ test("ships an early root-scoped landscape PWA bootstrap", async () => {
   assert.match(legacyWorker, /client\.navigate\('\/'\)/);
   assert.match(pageSource, /useEffect\(\(\) =>/);
   assert.match(pageSource, /document\.createElement\("script"\)/);
-  assert.match(pageSource, /loadScript\("\/pwa\.js\?v=16", "pwa"\)/);
-  assert.match(pageSource, /loadScript\("\/playstudy\/app\.js\?v=16", "app"\)/);
-  assert.match(pageSource, /href="\/playstudy\/styles\.css\?v=16"/);
+  assert.match(pageSource, /loadScript\("\/pwa\.js\?v=17", "pwa"\)/);
+  assert.match(pageSource, /loadScript\("\/playstudy\/app\.js\?v=17", "app"\)/);
+  assert.match(pageSource, /href="\/playstudy\/styles\.css\?v=17"/);
   assert.match(appScript, /id='video-import-progress'/);
   assert.match(appScript, /端末に動画を保存しています/);
   assert.match(appScript, /最初の場面からサムネイルを作っています/);
@@ -129,8 +129,8 @@ test("builds a complete root GitHub Pages PWA", async () => {
   assert.equal(manifest.start_url, "/");
   assert.equal(manifest.scope, "/");
   assert.match(html, /name="playstudy-root" content="\/"/);
-  assert.match(html, /src="\/pwa\.js\?v=16"/);
-  assert.match(html, /src="\/playstudy\/app\.js\?v=16"/);
+  assert.match(html, /src="\/pwa\.js\?v=17"/);
+  assert.match(html, /src="\/playstudy\/app\.js\?v=17"/);
   assert.match(pwaBootstrap, /serviceWorker\.register/);
   assert.match(worker, /playstudy-shell-/);
 });
@@ -179,4 +179,34 @@ test("ships one unified player-first workflow", async () => {
   assert.match(styles, /\.unified-player \.tools/);
   assert.match(styles, /\.corner-player-controls/);
   assert.match(styles, /\.player-floating-chrome\.is-visible/);
+});
+
+test("ships a mobile-first full-screen player with an overlay comment composer", async () => {
+  const [appScript, styles] = await Promise.all([
+    readFile(new URL("public/playstudy/app.js", root), "utf8"),
+    readFile(new URL("public/playstudy/styles.css", root), "utf8"),
+  ]);
+  const focus = appScript.slice(appScript.indexOf("/* ===== mobile focus experience"));
+
+  assert.match(focus, /class="app-shell focus-player"/);
+  assert.match(focus, /id="focus-stage"/);
+  assert.match(focus, /id="focus-hud"/);
+  assert.match(focus, /id="focus-comment-open"/);
+  assert.match(focus, /id="focus-comment-sheet"/);
+  assert.match(focus, /state\.focusCommentAnchor=vid\.currentTime/);
+  assert.match(focus, /state\.focusResumeAfterComment=!vid\.paused/);
+  assert.match(focus, /event\.key==='Enter'&&!event\.shiftKey&&!event\.isComposing/);
+  assert.match(focus, /now-lastTap<320/);
+  assert.match(focus, /vid\.playbackRate=2/);
+  assert.match(focus, /if\(state\.screen==='player'\)\{bindFocusPlayer\(\);return\}/);
+  assert.doesNotMatch(focus, /advancedPlayer\(\)/);
+
+  assert.match(styles, /body\.player-active \.focus-player\{position:fixed!important;inset:0!important/);
+  assert.match(styles, /height:100dvh!important/);
+  assert.match(styles, /\.focus-comment-sheet\.analysis-panel\{position:fixed!important/);
+  assert.match(styles, /@media\(orientation:portrait\)/);
+  assert.match(styles, /@media\(orientation:landscape\) and \(max-height:520px\)/);
+  assert.match(styles, /min-width:44px/);
+  assert.match(styles, /font-size:16px/);
+  assert.match(styles, /env\(safe-area-inset-bottom\)/);
 });
