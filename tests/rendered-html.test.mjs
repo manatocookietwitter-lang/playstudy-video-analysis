@@ -37,11 +37,11 @@ test("opens PlayStudy directly at the site root", async () => {
 
   const html = await response.text();
   assert.match(html, /id="app"/);
-  assert.match(html, /href="\/playstudy\/styles\.css\?v=19"/);
+  assert.match(html, /href="\/playstudy\/styles\.css\?v=20"/);
   assert.match(html, /href="\/manifest\.webmanifest"/);
-  assert.match(html, /src="\/pwa\.js\?v=19"/);
-  assert.match(html, /src="\/playstudy\/player-gestures\.js\?v=19"/);
-  assert.match(html, /src="\/playstudy\/app\.js\?v=19"/);
+  assert.match(html, /src="\/pwa\.js\?v=20"/);
+  assert.match(html, /src="\/playstudy\/player-gestures\.js\?v=20"/);
+  assert.match(html, /src="\/playstudy\/app\.js\?v=20"/);
   assert.doesNotMatch(html, /\/playstudy\/index\.html[^"']*redirect/i);
 });
 
@@ -83,7 +83,7 @@ test("ships an early root-scoped landscape PWA bootstrap", async () => {
   assert.match(appScript, /\$\('#install-guide'\)\?\.showModal\(\)/);
   assert.doesNotMatch(appScript, /\(state\.canInstall\|\|iosInstallCandidate\(\)\)\?[^:]+:''/);
   assert.match(rootWorker, /playstudy-shell-/);
-  assert.match(rootWorker, /v19/);
+  assert.match(rootWorker, /v20/);
   assert.match(rootWorker, /const SCOPE_URL = new URL\(self\.registration\.scope\)/);
   assert.match(rootWorker, /cache\.addAll\(APP_SHELL/);
   assert.match(rootWorker, /navigationPreload\.enable/);
@@ -93,13 +93,13 @@ test("ships an early root-scoped landscape PWA bootstrap", async () => {
   assert.match(legacyWorker, /registration\.unregister\(\)/);
   assert.match(rootWorker, /if \(!response\.ok\) throw new Error/);
   assert.match(rootWorker, /preload\?\.ok/);
-  assert.match(rootWorker, /player-gestures\.js\?v=19/);
+  assert.match(rootWorker, /player-gestures\.js\?v=20/);
   assert.match(legacyWorker, /const APP_ROOT = new URL\('\.\.\/', self\.registration\.scope\)\.toString\(\)/);
   assert.match(legacyWorker, /client\.navigate\(APP_ROOT\)/);
-  assert.match(pageSource, /<script defer src="\/pwa\.js\?v=19"/);
-  assert.match(pageSource, /<script defer src="\/playstudy\/player-gestures\.js\?v=19"/);
-  assert.match(pageSource, /<script defer src="\/playstudy\/app\.js\?v=19"/);
-  assert.match(pageSource, /href="\/playstudy\/styles\.css\?v=19"/);
+  assert.match(pageSource, /<script defer src="\/pwa\.js\?v=20"/);
+  assert.match(pageSource, /<script defer src="\/playstudy\/player-gestures\.js\?v=20"/);
+  assert.match(pageSource, /<script defer src="\/playstudy\/app\.js\?v=20"/);
+  assert.match(pageSource, /href="\/playstudy\/styles\.css\?v=20"/);
   assert.match(pageSource, /className="boot-screen"/);
   assert.match(gestures, /createTapSequence/);
   assert.match(appScript, /id='video-import-progress'/);
@@ -142,9 +142,9 @@ test("builds a complete root GitHub Pages PWA", async () => {
   assert.equal(manifest.scope, "/");
   assert.equal(legacyHtml, html);
   assert.match(html, /name="playstudy-root" content="\/"/);
-  assert.match(html, /src="\/pwa\.js\?v=19"/);
-  assert.match(html, /src="\/playstudy\/player-gestures\.js\?v=19"/);
-  assert.match(html, /src="\/playstudy\/app\.js\?v=19"/);
+  assert.match(html, /src="\/pwa\.js\?v=20"/);
+  assert.match(html, /src="\/playstudy\/player-gestures\.js\?v=20"/);
+  assert.match(html, /src="\/playstudy\/app\.js\?v=20"/);
   assert.match(pwaBootstrap, /serviceWorker\.register/);
   assert.match(worker, /playstudy-shell-/);
   assert.match(legacyWorker, /client\.navigate\(APP_ROOT\)/);
@@ -163,7 +163,7 @@ test("builds a complete root GitHub Pages PWA", async () => {
   assert.equal(projectManifest.start_url, "/playstudy-video-analysis/");
   assert.equal(projectManifest.scope, "/playstudy-video-analysis/");
   assert.match(projectLegacyHtml, /name="playstudy-root" content="\/playstudy-video-analysis\/"/);
-  assert.match(projectLegacyHtml, /src="\/playstudy-video-analysis\/playstudy\/app\.js\?v=19"/);
+  assert.match(projectLegacyHtml, /src="\/playstudy-video-analysis\/playstudy\/app\.js\?v=20"/);
 });
 
 test("ships one unified player-first workflow", async () => {
@@ -227,6 +227,16 @@ test("ships a minimal native-like library and full-screen mobile player", async 
   assert.match(focus, /id="focus-hud"/);
   assert.match(focus, /id="focus-comment-open"/);
   assert.match(focus, /id="focus-comment-sheet"/);
+  assert.match(focus, /id="focus-comment-anchor"/);
+  assert.match(focus, /保存位置/);
+  assert.match(focus, /この時刻に保存/);
+  assert.match(focus, /この動画のメモ/);
+  assert.match(focus, /id="focus-comment-count"/);
+  assert.match(focus, /メモを開く、\$\{notes\.length\}件/);
+  assert.match(focus, /focusMemoParts\(text\)/);
+  assert.match(focus, /メモを入力してください/);
+  assert.doesNotMatch(focus, /id="focus-comment-cancel"/);
+  assert.doesNotMatch(focus, /コメントを保存しました/);
   assert.match(focus, /state\.focusCommentAnchor=vid\.currentTime/);
   assert.match(focus, /state\.focusResumeAfterComment=!vid\.paused/);
   assert.match(focus, /event\.key==='Enter'&&!event\.shiftKey&&!event\.isComposing/);
@@ -258,5 +268,19 @@ test("ships a minimal native-like library and full-screen mobile player", async 
   assert.match(minimalStyles, /min-width:44px/);
   assert.match(minimalStyles, /font-size:16px/);
   assert.match(minimalStyles, /env\(safe-area-inset-bottom\)/);
+  assert.match(minimalStyles, /\.focus-comment-anchor-row/);
+  assert.match(minimalStyles, /\.focus-comment-history-head/);
+  assert.match(minimalStyles, /\.focus-memo-text/);
   assert.doesNotMatch(minimalStyles, /radial-gradient|backdrop-filter:blur|\.focus-open-card/);
+});
+
+test("uses one plain memo field for create and edit", async () => {
+  const appScript = await readFile(new URL("public/playstudy/app.js", root), "utf8");
+  const memoOverride = appScript.slice(appScript.indexOf("function focusMemoText"));
+
+  assert.match(memoOverride, /id="note-text"/);
+  assert.match(memoOverride, /function focusMemoText\(note\)/);
+  assert.match(memoOverride, /function focusMemoParts\(value\)/);
+  assert.doesNotMatch(memoOverride, /id="note-title"/);
+  assert.doesNotMatch(memoOverride, /id="note-body"/);
 });

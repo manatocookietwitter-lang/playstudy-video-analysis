@@ -511,6 +511,8 @@ body.player-active .focus-player{
 .focus-comment-sheet>header h2{margin:0;font-size:20px;letter-spacing:-.02em}
 .focus-comment-sheet>header button{min-width:44px;height:44px;border:0;background:transparent;color:var(--blue);font-size:15px;font-weight:700}
 .focus-comment-compose{padding:14px 16px;border-bottom:1px solid var(--line)}
+.focus-comment-anchor-row{display:flex;align-items:center;justify-content:space-between;margin:0 0 9px;font-size:13px;font-weight:700}
+.focus-comment-anchor-row strong{padding:5px 9px;border-radius:999px;background:var(--text);color:var(--surface);font-variant-numeric:tabular-nums;font-size:13px}
 .focus-comment-compose textarea{
  width:100%;
  min-height:88px;
@@ -527,18 +529,19 @@ body.player-active .focus-player{
 }
 .focus-comment-compose textarea:focus{border-color:var(--blue);outline:2px solid var(--blue);outline-offset:1px}
 .focus-comment-error{min-height:20px;margin:4px 0 0;color:#d92d20;font-size:13px}
-.focus-comment-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.focus-comment-actions{display:grid;grid-template-columns:1fr;gap:8px}
 .focus-comment-actions button{min-height:44px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--text);font-size:14px;font-weight:700}
 .focus-comment-actions button:last-child{border-color:var(--blue);background:var(--blue);color:#fff}
 .focus-comment-history{min-height:0;flex:1;padding:0 16px max(12px,env(safe-area-inset-bottom));overflow:hidden}
-.focus-comment-list,#focus-comment-list{height:100%;min-height:0;overflow-y:auto}
+.focus-comment-history-head{display:flex;align-items:center;justify-content:space-between;min-height:45px;border-bottom:1px solid var(--line)}
+.focus-comment-history-head h3{margin:0;font-size:14px}
+.focus-comment-history-head span{font-size:12px;font-weight:700}
+#focus-comment-list{height:calc(100% - 45px);min-height:0;overflow-y:auto}
 .focus-memo{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:start;gap:8px;padding:12px 0;border-bottom:1px solid var(--line)}
 .focus-memo-time,.focus-memo-edit{min-height:44px;border:0;background:transparent;color:var(--blue);font-size:12px;font-weight:700}
-.focus-memo-time{padding:0 6px}
+.focus-memo-time{min-width:88px;padding:0 6px;text-align:left;font-variant-numeric:tabular-nums}
 .focus-memo-edit{padding:0 8px}
-.focus-memo>div{min-width:0;padding-top:4px}
-.focus-memo b{display:block;overflow:hidden;font-size:14px;text-overflow:ellipsis;white-space:nowrap}
-.focus-memo p{margin:5px 0 0;color:var(--muted);font-size:13px;line-height:1.45}
+.focus-memo-text{min-width:0;margin:0;padding-top:5px;color:var(--text);font-size:14px;line-height:1.45;white-space:pre-wrap;overflow-wrap:anywhere}
 .focus-memo-empty{padding:28px 0;color:var(--muted);font-size:14px;text-align:center}
 .focus-library button:focus-visible,.focus-player button:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
 .sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
@@ -590,7 +593,7 @@ html[data-app-boot="error"] .boot-retry{visibility:visible}
  .focus-comment-sheet>header{min-height:50px;padding-top:max(3px,env(safe-area-inset-top));padding-bottom:3px}
  .focus-comment-compose{padding:8px 13px}
  .focus-comment-compose textarea{min-height:58px}
- .focus-comment-actions button{min-height:40px}
+ .focus-comment-actions button{min-height:44px}
 }
 @media(max-width:560px){
  .focus-library-head{padding-inline:12px}
