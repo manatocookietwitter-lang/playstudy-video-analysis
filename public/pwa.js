@@ -1,6 +1,6 @@
 document.documentElement.setAttribute("data-pwa-boot", "started");
 (() => {
-  const INSTALLED_KEY = "playstudy_pwa_installed";
+  const INSTALLED_KEY = "playstudy_pwa_installed_v2";
   const rootMeta = document.querySelector('meta[name="playstudy-root"]')?.content || "/";
   const rootUrl = new URL(rootMeta, location.href);
   const standalone = () =>

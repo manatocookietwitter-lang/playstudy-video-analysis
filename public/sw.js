@@ -1,15 +1,17 @@
 const CACHE_PREFIX = "playstudy-shell-";
-const CACHE_NAME = `${CACHE_PREFIX}v20`;
+const CACHE_NAME = `${CACHE_PREFIX}v21`;
 const SCOPE_URL = new URL(self.registration.scope);
 const scopedUrl = (path = "") => new URL(path.replace(/^\//, ""), SCOPE_URL).toString();
-const SHELL_URL = scopedUrl("");
+const ROOT_URL = scopedUrl("");
+const SHELL_URL = scopedUrl("launch/");
 const APP_SHELL = [
   SHELL_URL,
+  ROOT_URL,
   scopedUrl("manifest.webmanifest"),
-  scopedUrl("pwa.js?v=20"),
-  scopedUrl("playstudy/styles.css?v=20"),
-  scopedUrl("playstudy/player-gestures.js?v=20"),
-  scopedUrl("playstudy/app.js?v=20"),
+  scopedUrl("pwa.js?v=21"),
+  scopedUrl("playstudy/styles.css?v=21"),
+  scopedUrl("playstudy/player-gestures.js?v=21"),
+  scopedUrl("playstudy/app.js?v=21"),
   scopedUrl("playstudy/icons/icon-192.png"),
   scopedUrl("playstudy/icons/icon-512.png"),
   scopedUrl("playstudy/icons/icon-maskable-512.png"),
@@ -47,7 +49,9 @@ async function networkFirst(request, fallbackUrl) {
   try {
     const response = await fetch(request);
     if (!response.ok) throw new Error(`Navigation failed with ${response.status}`);
-    await cache.put(fallbackUrl, response.clone());
+    if (new URL(request.url).pathname === new URL(fallbackUrl).pathname) {
+      await cache.put(fallbackUrl, response.clone());
+    }
     return response;
   } catch {
     return (await cache.match(fallbackUrl)) || new Response(
@@ -66,8 +70,10 @@ self.addEventListener("fetch", (event) => {
     event.respondWith((async () => {
       const preload = await event.preloadResponse;
       if (preload?.ok) {
-        const cache = await caches.open(CACHE_NAME);
-        await cache.put(SHELL_URL, preload.clone());
+        if (url.pathname === new URL(SHELL_URL).pathname) {
+          const cache = await caches.open(CACHE_NAME);
+          await cache.put(SHELL_URL, preload.clone());
+        }
         return preload;
       }
       return networkFirst(request, SHELL_URL);

@@ -542,9 +542,9 @@ route=function(screenName,id){
 };
 nav=function(){return ''};
 topbar=function(title,back=false){const showBack=back||state.screen!=='library';return `<header class="topbar unified-page-header">${showBack?`<button class="icon-btn" data-back aria-label="戻る">${ICONS.back}</button>`:'<span class="simple-logo">P</span>'}<h${showBack?'2':'1'}>${esc(title)}</h${showBack?'2':'1'}></header>`};
-function unifiedInstallGuide(){return `<dialog id="install-guide" aria-labelledby="install-guide-title"><div class="dialog-head"><h3 id="install-guide-title">ホーム画面に追加</h3><button class="icon-btn" id="install-close" aria-label="閉じる">×</button></div><div class="dialog-body install-guide-body"><p>Safari・Chrome・EdgeでこのURLを開き、ブラウザのメニューから「ホーム画面に追加」または「アプリをインストール」を選んでください。</p><p class="install-guide-hint">既にある開けないアイコンは、新しいアイコンの起動確認後に削除してください。サイトデータは消さないでください。</p></div><div class="dialog-actions"><button class="btn primary" id="install-copy">URLをコピー</button><button class="btn" id="install-done">閉じる</button></div></dialog>`}
+function unifiedInstallGuide(){return `<dialog id="install-guide" aria-labelledby="install-guide-title"><div class="dialog-head"><h3 id="install-guide-title">新しいアプリを追加</h3><button class="icon-btn" id="install-close" aria-label="閉じる">×</button></div><div class="dialog-body install-guide-body"><p>ブラウザのメニューから「ホーム画面に追加」または「アプリをインストール」を選んでください。</p><p class="install-guide-hint">新しいアイコンが開くことを確認してから、以前の開けないアイコンだけを削除してください。動画やメモのデータ削除は不要です。</p></div><div class="dialog-actions"><button class="btn primary" id="install-copy">URLをコピー</button><button class="btn" id="install-done">閉じる</button></div></dialog>`}
 library=function(){
- const videos=[...state.videos].sort((a,b)=>(b.lastOpened||0)-(a.lastOpened||0)),installed=installedMode(),installLabel=state.canInstall?'アプリをインストール':'ホーム画面に追加',installAction=installed?'':`<button class="simple-install" id="install-app">${installLabel}</button>`;
+ const videos=[...state.videos].sort((a,b)=>(b.lastOpened||0)-(a.lastOpened||0)),installed=installedMode(),installLabel=state.canInstall?'新しいアプリをインストール':'新しいアプリを追加',installAction=installed?'':`<button class="simple-install" id="install-app">${installLabel}</button>`;
  const list=videos.length?`<section class="unified-videos"><div class="section-head"><h2>動画</h2><span class="subtle">${videos.length}本</span></div><div class="simple-video-list">${videos.map(videoCard).join('')}</div></section>`:`<div class="unified-empty"><b>動画はまだありません</b><span>下のボタンから端末内の動画を選んでください</span></div>`;
  return `<div class="app-shell unified-library"><main class="content unified-home"><div class="unified-homebar"><div class="unified-brand"><span class="simple-logo">P</span><div><b>PlayStudy</b><small>動画を見て、気づきを残す</small></div></div><div class="unified-home-actions"><button class="unified-settings-button" id="unified-research">研究</button><button class="unified-settings-button" id="unified-settings" aria-label="設定">設定</button></div></div><section class="unified-open-card"><h1>動画を開く</h1><p>選ぶとすぐ再生画面へ進みます。動画とメモはこの端末内に保存されます。</p><button class="simple-open" id="add-video">動画を選ぶ</button>${installAction}</section>${list}</main>${unifiedInstallGuide()}<div id="toast" class="toast"></div></div>`
 };
@@ -633,7 +633,7 @@ function focusVideoCard(item){
 }
 
 library=function(){
- const videos=[...state.videos].sort((a,b)=>(b.lastOpened||0)-(a.lastOpened||0)),installed=installedMode(),installLabel=state.canInstall?'アプリをインストール':'ホーム画面に追加',installAction=installed?'':`<button class="focus-install" id="install-app">${installLabel}</button>`,list=videos.length?`<section class="focus-library-section" aria-label="動画一覧"><div class="focus-video-list">${videos.map(focusVideoCard).join('')}</div></section>`:`<p class="focus-library-empty">動画がありません</p>`;
+ const videos=[...state.videos].sort((a,b)=>(b.lastOpened||0)-(a.lastOpened||0)),installed=installedMode(),installLabel=state.canInstall?'新しいアプリをインストール':'新しいアプリを追加',installAction=installed?'':`<button class="focus-install" id="install-app">${installLabel}</button>`,list=videos.length?`<section class="focus-library-section" aria-label="動画一覧"><div class="focus-video-list">${videos.map(focusVideoCard).join('')}</div></section>`:`<p class="focus-library-empty">動画がありません</p>`;
  return `<div class="app-shell focus-library"><header class="focus-library-head"><div class="focus-brand"><b>PlayStudy</b></div><div><button id="unified-research">研究</button><button id="unified-settings" aria-label="設定">設定</button></div></header><main><section class="focus-library-toolbar"><h1>動画</h1><button class="focus-open" id="add-video">動画を追加</button></section>${list}${installAction}</main>${unifiedInstallGuide()}<div id="toast" class="toast"></div></div>`
 };
 
@@ -657,7 +657,7 @@ function bindFocusPlayer(){
  focusPlayerController?.abort();focusPlayerController=new AbortController();const signal=focusPlayerController.signal,on=(element,type,handler,options={})=>element?.addEventListener(type,handler,{...options,signal}),current=activeV(),stage=$('#focus-stage'),hud=$('#focus-hud'),sheet=$('#focus-comment-sheet'),backdrop=$('#focus-sheet-backdrop');if(!current||!stage)return;
  $$('[data-back]').forEach(button=>on(button,'click',()=>route('library')));on($('#player-settings'),'click',()=>{state.settingsReturn='player';route('settings')});$$('[data-close]').forEach(button=>on(button,'click',()=>button.closest('dialog')?.close()));
  on($('#focus-relink'),'click',()=>{state.relinkVideoId=current.id;$('#relink-file-global')?.click()});const relink=$('#relink-file-global');if(relink)relink.onchange=event=>{const file=event.target.files?.[0];if(file){relinkFile(file,current.id);event.target.value=''}};
- if(STORED_VIDEO_MODES.has(current.storageMode)&&!current.src&&!current.missingSource){hydrateVideo(current).then(()=>{if(state.screen==='player'&&activeV()?.id===current.id)render()});return}
+ if(STORED_VIDEO_MODES.has(current.storageMode)&&!current.src&&!current.missingSource){hydrateVideo(current).then(()=>{if(state.screen==='player'&&activeV()?.id===current.id)render()}).catch(()=>{current.missingSource=true;persist('videos');if(state.screen==='player'&&activeV()?.id===current.id)render()});return}
  const vid=$('#main-video');if(!vid)return;current.lastOpened=Date.now();const fps=current.fps||state.settings.frameRate||30,speeds=[.25,.5,.75,1,1.25,1.5,2],TAP_WINDOW_MS=350,tapMachine=window.PlayStudyGestures.createTapSequence({windowMs:TAP_WINDOW_MS});let tapState=tapMachine.initialState(),hudTimer,tapTimer,feedbackTimer,framePrecisionTimer,saveTimer,seekWasPlaying=false,holdTimer,holdActive=false,holdRate=1,suppressClickUntil=0,frameTimePreciseUntil=0,activeFrameStop=null;
  vid.playbackRate=current.lastSpeed||1;applyVideoTransform(vid,current);
  const setHud=visible=>{hud.classList.toggle('is-visible',visible);hud.classList.toggle('is-hidden',!visible)};
@@ -707,6 +707,7 @@ window.addEventListener('resize',()=>{document.documentElement.style.setProperty
 document.documentElement.style.setProperty('--panel-pct',(state.settings.panelWidth||27)+'%');
 window.addEventListener('beforeunload',persistAll);
 restoreSession();
+if(standaloneMode())state.screen='library';
 if(!activeV())state.screen='library';
 if(state.simpleMode){state.activeTab='memo';state.panelCollapsed=false;if(!['library','player'].includes(state.screen))state.screen='library'}
 preferLandscape();

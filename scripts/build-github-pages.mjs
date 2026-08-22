@@ -14,6 +14,7 @@ const basePath = `/${(process.env.PAGES_BASE_PATH || defaultBasePath || "/playst
 
 await rm(outputRoot, { recursive: true, force: true });
 await mkdir(join(outputRoot, "playstudy"), { recursive: true });
+await mkdir(join(outputRoot, "launch"), { recursive: true });
 
 let html = await readFile(join(publicRoot, "playstudy", "index.html"), "utf8");
 html = html
@@ -24,10 +25,11 @@ html = html
   .replaceAll('src="/pwa.js', `src="${basePath}pwa.js`);
 await writeFile(join(outputRoot, "index.html"), html);
 await writeFile(join(outputRoot, "playstudy", "index.html"), html);
+await writeFile(join(outputRoot, "launch", "index.html"), html);
 
 const manifest = JSON.parse(await readFile(join(publicRoot, "manifest.webmanifest"), "utf8"));
-manifest.id = `${basePath}playstudy`;
-manifest.start_url = basePath;
+manifest.id = `${basePath}playstudy-v2`;
+manifest.start_url = `${basePath}launch/`;
 manifest.scope = basePath;
 manifest.icons = manifest.icons.map((icon) => ({
   ...icon,
